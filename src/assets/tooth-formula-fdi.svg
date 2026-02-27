@@ -1,0 +1,89 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <rect x="2" y="2" width="508" height="508" rx="36" fill="#232529" stroke="#44484e" stroke-width="3"/>
+  <line x1="256" y1="58" x2="256" y2="430" stroke="#6c7179" stroke-width="3"/>
+  <line x1="24" y1="230" x2="488" y2="230" stroke="#6c7179" stroke-width="3"/>
+
+  <defs>
+    <g id="molar-up" fill="none" stroke="#f4f5f7" stroke-width="3.1" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M0 0 C-9 -3 -13 7 -13 18 C-12 36 -6 52 0 60 C6 52 12 36 13 18 C13 7 9 -3 0 0"/>
+      <path d="M-7 8 C-6 2 -3 -2 0 0 C3 -2 6 2 7 8"/>
+    </g>
+    <g id="premolar-up" fill="none" stroke="#f4f5f7" stroke-width="3.1" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M0 0 C-8 2 -12 15 -11 30 C-10 45 -4 58 0 64 C4 58 10 45 11 30 C12 15 8 2 0 0"/>
+      <path d="M-4 10 C-3 6 -1 3 0 3 C1 3 3 6 4 10"/>
+    </g>
+    <g id="canine-up" fill="none" stroke="#f4f5f7" stroke-width="3.1" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M0 -3 C-6 4 -8 20 -7 35 C-6 49 -2 60 0 68 C2 60 6 49 7 35 C8 20 6 4 0 -3"/>
+    </g>
+    <g id="incisor-up" fill="none" stroke="#f4f5f7" stroke-width="3.1" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M0 0 C-5 5 -6 20 -5 35 C-4 50 -1 61 0 70 C1 61 4 50 5 35 C6 20 5 5 0 0"/>
+    </g>
+
+    <g id="molar-down" fill="none" stroke="#f4f5f7" stroke-width="3.1" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M0 0 C-9 3 -13 -7 -13 -18 C-12 -36 -6 -52 0 -60 C6 -52 12 -36 13 -18 C13 -7 9 3 0 0"/>
+      <path d="M-7 -8 C-6 -2 -3 2 0 0 C3 2 6 -2 7 -8"/>
+    </g>
+    <g id="premolar-down" fill="none" stroke="#f4f5f7" stroke-width="3.1" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M0 0 C-8 -2 -12 -15 -11 -30 C-10 -45 -4 -58 0 -64 C4 -58 10 -45 11 -30 C12 -15 8 -2 0 0"/>
+      <path d="M-4 -10 C-3 -6 -1 -3 0 -3 C1 -3 3 -6 4 -10"/>
+    </g>
+    <g id="canine-down" fill="none" stroke="#f4f5f7" stroke-width="3.1" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M0 3 C-6 -4 -8 -20 -7 -35 C-6 -49 -2 -60 0 -68 C2 -60 6 -49 7 -35 C8 -20 6 -4 0 3"/>
+    </g>
+    <g id="incisor-down" fill="none" stroke="#f4f5f7" stroke-width="3.1" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M0 0 C-5 -5 -6 -20 -5 -35 C-4 -50 -1 -61 0 -70 C1 -61 4 -50 5 -35 C6 -20 5 -5 0 0"/>
+    </g>
+  </defs>
+
+  <g transform="translate(44 134)">
+    <use href="#molar-up" x="0" y="0"/>
+    <use href="#molar-up" x="26" y="0"/>
+    <use href="#molar-up" x="52" y="0"/>
+    <use href="#premolar-up" x="78" y="0"/>
+    <use href="#premolar-up" x="104" y="0"/>
+    <use href="#canine-up" x="130" y="0"/>
+    <use href="#incisor-up" x="156" y="0"/>
+    <use href="#incisor-up" x="182" y="0"/>
+    <use href="#incisor-up" x="208" y="0"/>
+    <use href="#incisor-up" x="234" y="0"/>
+    <use href="#canine-up" x="260" y="0"/>
+    <use href="#premolar-up" x="286" y="0"/>
+    <use href="#premolar-up" x="312" y="0"/>
+    <use href="#molar-up" x="338" y="0"/>
+    <use href="#molar-up" x="364" y="0"/>
+    <use href="#molar-up" x="390" y="0"/>
+  </g>
+
+  <g transform="translate(44 326)">
+    <use href="#molar-down" x="0" y="0"/>
+    <use href="#molar-down" x="26" y="0"/>
+    <use href="#molar-down" x="52" y="0"/>
+    <use href="#premolar-down" x="78" y="0"/>
+    <use href="#premolar-down" x="104" y="0"/>
+    <use href="#canine-down" x="130" y="0"/>
+    <use href="#incisor-down" x="156" y="0"/>
+    <use href="#incisor-down" x="182" y="0"/>
+    <use href="#incisor-down" x="208" y="0"/>
+    <use href="#incisor-down" x="234" y="0"/>
+    <use href="#canine-down" x="260" y="0"/>
+    <use href="#premolar-down" x="286" y="0"/>
+    <use href="#premolar-down" x="312" y="0"/>
+    <use href="#molar-down" x="338" y="0"/>
+    <use href="#molar-down" x="364" y="0"/>
+    <use href="#molar-down" x="390" y="0"/>
+  </g>
+
+  <g fill="#f4f5f7" font-size="44" font-family="Segoe UI, Arial, sans-serif" font-weight="500">
+    <text x="30" y="214">18</text><text x="111" y="214">15</text><text x="194" y="214">11</text>
+    <text x="275" y="214">21</text><text x="356" y="214">25</text><text x="437" y="214">28</text>
+    <text x="30" y="272">48</text><text x="111" y="272">45</text><text x="194" y="272">41</text>
+    <text x="275" y="272">31</text><text x="356" y="272">35</text><text x="437" y="272">38</text>
+  </g>
+  <g fill="#f4f5f7" font-size="22" font-family="Segoe UI, Arial, sans-serif">
+    <text x="102" y="214">&#183;</text><text x="184" y="214">&#183;</text><text x="266" y="214">&#183;</text><text x="348" y="214">&#183;</text><text x="430" y="214">&#183;</text>
+    <text x="102" y="272">&#183;</text><text x="184" y="272">&#183;</text><text x="266" y="272">&#183;</text><text x="348" y="272">&#183;</text><text x="430" y="272">&#183;</text>
+  </g>
+  <g fill="#f4f5f7" font-size="58" font-family="Segoe UI, Arial, sans-serif" font-weight="500">
+    <text x="116" y="468">Европейская</text>
+  </g>
+</svg>

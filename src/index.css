@@ -1,0 +1,795 @@
+:root {
+  font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica,
+    Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  color-scheme: light dark;
+}
+
+/* Spacing scale (4px base) */
+:root {
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --radius-sm: 10px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+}
+
+/* Theme tokens (app uses data-theme="light|dark") */
+:root {
+  --bg: #0b0f17;
+  --panel: #101826;
+  --panel2: #0f1624;
+  --text: #e6edf7;
+  --muted: #a7b4c6;
+  --border: rgba(255, 255, 255, 0.08);
+  --primary: #6ea8fe;
+  --danger: #ff5c77;
+  --success: #24c08a;
+  --shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+  --ring: 0 0 0 3px rgba(110, 168, 254, 0.28);
+}
+
+html[data-theme='light'] {
+  --bg: #f6f8fc;
+  --panel: #ffffff;
+  --panel2: #fbfcff;
+  --text: #0b1220;
+  --muted: #516079;
+  --border: rgba(15, 23, 42, 0.1);
+  --primary: #2f6feb;
+  --danger: #d11f3b;
+  --success: #0f9d6a;
+  --shadow: 0 18px 44px rgba(15, 23, 42, 0.14);
+  --ring: 0 0 0 3px rgba(47, 111, 235, 0.22);
+  color-scheme: light;
+}
+
+html[data-theme='dark'] {
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: radial-gradient(1200px 800px at 15% 10%, rgba(110, 168, 254, 0.14), transparent 55%),
+    radial-gradient(900px 600px at 85% 40%, rgba(36, 192, 138, 0.08), transparent 55%),
+    var(--bg);
+  color: var(--text);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+:focus-visible {
+  outline: none;
+  box-shadow: var(--ring);
+}
+
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+button:focus-visible {
+  outline: none;
+  box-shadow: var(--ring);
+}
+
+/* Small utility classes */
+.muted {
+  color: var(--muted);
+}
+
+.kbd {
+  font-size: 12px;
+  padding: 2px 6px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: color-mix(in oklab, var(--panel) 80%, transparent);
+}
+
+/* ========== Responsive breakpoints (10 main viewport sizes) ========== */
+/* 320, 375, 414 (phones), 640 (large phone), 768 (tablet), 1024, 1280, 1440, 1680, 1920 (desktop) */
+
+/* --- App shell: sidebar + main --- */
+.app-shell {
+  height: 100%;
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  gap: var(--space-5);
+  padding: var(--space-5);
+}
+@media (max-width: 1023px) {
+  .app-shell {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+    padding: var(--space-3);
+  }
+}
+@media (max-width: 639px) {
+  .app-shell {
+    padding: var(--space-2);
+  }
+  .app-shell .topbar-subtitle {
+    display: none;
+  }
+}
+@media (max-width: 413px) {
+  .app-shell {
+    padding: var(--space-2);
+    gap: var(--space-3);
+  }
+}
+
+/* --- Two-column layout (patients, services) --- */
+.layout-two-col {
+  display: grid;
+  grid-template-columns: 1fr 420px;
+  gap: var(--space-5);
+  align-items: start;
+}
+@media (max-width: 1279px) {
+  .layout-two-col {
+    grid-template-columns: 1fr 380px;
+  }
+}
+@media (max-width: 1023px) {
+  .layout-two-col {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 767px) {
+  .layout-two-col {
+    gap: var(--space-4);
+  }
+}
+@media (max-width: 413px) {
+  .layout-two-col {
+    gap: var(--space-3);
+  }
+}
+
+/* --- Treatment planner: 3 steps --- */
+.layout-planner {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr 1.3fr;
+  gap: 14px;
+  align-items: start;
+}
+@media (max-width: 1679px) {
+  .layout-planner {
+    grid-template-columns: 1.1fr 1fr 1.2fr;
+  }
+}
+@media (max-width: 1439px) {
+  .layout-planner {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+}
+@media (max-width: 1279px) {
+  .layout-planner {
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto;
+  }
+  .layout-planner .planner-step-3 {
+    grid-column: 1 / -1;
+  }
+}
+@media (max-width: 1023px) {
+  .layout-planner {
+    grid-template-columns: 1fr;
+    gap: var(--space-4);
+  }
+  .layout-planner .planner-step-3 {
+    grid-column: 1;
+  }
+}
+@media (max-width: 767px) {
+  .layout-planner {
+    gap: var(--space-3);
+  }
+}
+@media (max-width: 413px) {
+  .layout-planner {
+    gap: var(--space-2);
+  }
+}
+
+/* --- Card header with right slot (search, actions) --- */
+.card-header-wrap {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-4);
+}
+.card-header-wrap .card-header-right {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+@media (max-width: 767px) {
+  .card-header-wrap .card-header-right {
+    width: 100%;
+    max-width: 100%;
+  }
+}
+@media (max-width: 413px) {
+  .card-header-wrap {
+    gap: var(--space-2);
+    margin-bottom: var(--space-3);
+  }
+}
+
+/* --- Search bar width in card header --- */
+.card-search-wrap {
+  width: 320px;
+  max-width: 100%;
+  display: flex;
+  gap: var(--space-3);
+}
+@media (max-width: 767px) {
+  .card-search-wrap {
+    width: 100%;
+  }
+}
+
+/* --- Patient row / service row (list items) --- */
+.row-patient,
+.row-service {
+  display: grid;
+  grid-template-columns: 40px 1fr auto;
+  gap: var(--space-3);
+  align-items: center;
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: color-mix(in oklab, var(--panel2) 75%, transparent);
+}
+@media (max-width: 639px) {
+  .row-patient,
+  .row-service {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto;
+    gap: var(--space-2);
+    padding: var(--space-3);
+  }
+  .row-patient .row-actions,
+  .row-service .row-actions {
+    display: flex;
+    gap: var(--space-2);
+    flex-wrap: wrap;
+  }
+}
+@media (max-width: 413px) {
+  .row-patient,
+  .row-service {
+    padding: var(--space-2);
+  }
+}
+
+/* --- Procedure row in staging (complex grid) --- */
+.proc-row {
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: start;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: color-mix(in oklab, var(--panel) 88%, transparent);
+}
+.proc-row .proc-row-icon {
+  flex-shrink: 0;
+}
+.proc-row .proc-row-main {
+  min-width: 0;
+}
+.proc-row .proc-row-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.proc-row .proc-row-name {
+  font-weight: 650;
+}
+.proc-row .proc-row-pill {
+  flex-shrink: 0;
+}
+.proc-row .proc-row-teeth {
+  font-size: 12px;
+  margin-top: 4px;
+}
+/* Controls (qty + stage + actions) in one group — no overlap */
+.proc-row .proc-row-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: nowrap;
+  flex-shrink: 0;
+  min-width: 0;
+}
+.proc-row .proc-row-qty {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  flex-shrink: 0;
+  width: 64px;
+}
+.proc-row .proc-row-qty-input {
+  width: 56px !important;
+  min-width: 56px !important;
+  max-width: 56px !important;
+  text-align: right;
+  box-sizing: border-box;
+}
+.proc-row .proc-row-price {
+  font-size: 12px;
+}
+.proc-row .proc-row-stage {
+  flex-shrink: 0;
+  width: 130px;
+  min-width: 100px;
+}
+.proc-row .proc-row-stage select {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+.proc-row .proc-row-actions {
+  flex-shrink: 0;
+}
+@media (max-width: 1279px) {
+  .proc-row .proc-row-stage {
+    width: 120px;
+    min-width: 90px;
+  }
+}
+@media (max-width: 1023px) {
+  .proc-row .proc-row-controls {
+    gap: 8px;
+  }
+  .proc-row .proc-row-qty {
+    width: 56px;
+  }
+  .proc-row .proc-row-qty-input {
+    width: 48px !important;
+    min-width: 48px !important;
+    max-width: 48px !important;
+  }
+  .proc-row .proc-row-stage {
+    width: 110px;
+    min-width: 80px;
+  }
+}
+/* From 768px: stack — main content first, then controls on second row */
+@media (max-width: 959px) {
+  .proc-row {
+    grid-template-columns: 38px minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    gap: 10px;
+    align-items: start;
+  }
+  .proc-row .proc-row-icon {
+    grid-column: 1;
+    grid-row: 1;
+  }
+  .proc-row .proc-row-main {
+    grid-column: 2;
+    grid-row: 1;
+  }
+  .proc-row .proc-row-controls {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .proc-row .proc-row-qty {
+    width: 56px;
+  }
+  .proc-row .proc-row-stage {
+    min-width: 120px;
+    width: 140px;
+  }
+}
+@media (max-width: 767px) {
+  .proc-row {
+    gap: 10px;
+    padding: 12px;
+  }
+  .proc-row .proc-row-stage {
+    flex: 1;
+    min-width: 100px;
+    max-width: 180px;
+  }
+}
+@media (max-width: 413px) {
+  .proc-row {
+    padding: 10px;
+    gap: 8px;
+  }
+  .proc-row .proc-row-controls {
+    gap: 6px;
+  }
+  .proc-row .proc-row-qty {
+    width: 52px;
+  }
+  .proc-row .proc-row-qty-input {
+    width: 44px !important;
+    min-width: 44px !important;
+    max-width: 44px !important;
+  }
+  .proc-row .proc-row-stage {
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+  }
+}
+
+/* --- Service row in Step 2 (icon, name, add button) --- */
+.service-row-inner {
+  display: grid;
+  grid-template-columns: 42px 1fr auto;
+  gap: 10px;
+  align-items: center;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: color-mix(in oklab, var(--panel2) 70%, transparent);
+}
+@media (max-width: 413px) {
+  .service-row-inner {
+    grid-template-columns: 36px 1fr auto;
+    gap: 8px;
+    padding: 8px;
+  }
+}
+
+/* --- Step 2 filters: Category + Search / Jaw --- */
+.planner-filters {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+@media (max-width: 639px) {
+  .planner-filters {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* --- Patient detail: top actions and plan selector --- */
+.patient-detail-top {
+  display: flex;
+  gap: var(--space-5);
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+.patient-detail-meta {
+  display: flex;
+  gap: var(--space-4);
+  align-items: center;
+}
+.patient-detail-actions {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+  flex-wrap: wrap;
+}
+.patient-detail-plan-select {
+  width: 260px;
+  max-width: 100%;
+}
+@media (max-width: 1023px) {
+  .patient-detail-top {
+    gap: var(--space-4);
+  }
+  .patient-detail-plan-select {
+    width: 220px;
+  }
+}
+@media (max-width: 767px) {
+  .patient-detail-top {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-3);
+  }
+  .patient-detail-meta {
+    flex-wrap: wrap;
+  }
+  .patient-detail-actions {
+    width: 100%;
+  }
+  .patient-detail-plan-select {
+    width: 100%;
+  }
+}
+@media (max-width: 413px) {
+  .patient-detail-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+/* --- Settings: 3-column grid --- */
+.settings-grid-3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: var(--space-4);
+}
+@media (max-width: 1023px) {
+  .settings-grid-3 {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+@media (max-width: 639px) {
+  .settings-grid-3 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* --- Settings: 2-column (greeting / terms) --- */
+.settings-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-4);
+}
+@media (max-width: 767px) {
+  .settings-grid-2 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* --- Settings page max width --- */
+.settings-page {
+  max-width: 980px;
+  width: 100%;
+}
+@media (max-width: 1023px) {
+  .settings-page {
+    max-width: 100%;
+  }
+}
+
+/* --- Tooth numbering modal switcher --- */
+.tooth-numbering-trigger {
+  width: 100%;
+  min-height: 40px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: color-mix(in oklab, var(--panel2) 85%, transparent);
+  color: var(--text);
+  font-size: 14px;
+  text-align: left;
+  padding: 10px 12px;
+  cursor: pointer;
+}
+.tooth-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: grid;
+  place-items: center;
+  padding: var(--space-4);
+  z-index: 90;
+}
+.tooth-modal {
+  width: min(980px, 100%);
+  border: 1px solid var(--border);
+  border-radius: 28px;
+  background: linear-gradient(180deg, color-mix(in oklab, var(--panel) 95%, black), var(--panel));
+  box-shadow: var(--shadow);
+  padding: 28px;
+}
+.tooth-modal-title {
+  font-size: 48px;
+  line-height: 1.05;
+  font-weight: 550;
+  text-align: center;
+  margin-bottom: 24px;
+  letter-spacing: 0.01em;
+}
+.tooth-modal-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.tooth-option-card {
+  border: 1px solid var(--border);
+  border-radius: 28px;
+  background: color-mix(in oklab, var(--panel2) 82%, transparent);
+  color: var(--text);
+  cursor: pointer;
+  text-align: left;
+  padding: 12px;
+  transition: border-color 0.15s ease, background 0.15s ease, transform 0.15s ease;
+}
+.tooth-option-card:hover {
+  transform: translateY(-1px);
+}
+.tooth-option-card.active {
+  border-color: color-mix(in oklab, var(--primary) 65%, var(--border));
+  background: color-mix(in oklab, var(--panel2) 76%, var(--primary) 14%);
+}
+.tooth-option-preview {
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 10px;
+  display: grid;
+  place-items: center;
+  min-height: 220px;
+  background: #23252a;
+}
+.tooth-option-image {
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  display: block;
+}
+.tooth-option-label {
+  margin-top: 12px;
+  text-align: center;
+  font-size: 32px;
+  line-height: 1.1;
+  font-weight: 450;
+}
+.tooth-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 16px;
+}
+@media (max-width: 1279px) {
+  .tooth-modal-title {
+    font-size: 40px;
+  }
+  .tooth-option-label {
+    font-size: 28px;
+  }
+}
+@media (max-width: 1023px) {
+  .tooth-modal {
+    border-radius: 22px;
+    padding: 20px;
+  }
+  .tooth-modal-grid {
+    grid-template-columns: 1fr;
+  }
+  .tooth-option-preview {
+    min-height: 180px;
+  }
+  .tooth-option-image {
+    width: 100%;
+    height: auto;
+  }
+  .tooth-option-label {
+    font-size: 24px;
+  }
+}
+@media (max-width: 639px) {
+  .tooth-modal-overlay {
+    padding: var(--space-2);
+  }
+  .tooth-modal {
+    padding: 14px;
+    border-radius: 18px;
+  }
+  .tooth-modal-title {
+    font-size: 30px;
+    margin-bottom: 14px;
+  }
+  .tooth-option-card {
+    border-radius: 18px;
+    padding: 10px;
+  }
+  .tooth-option-preview {
+    min-height: 140px;
+    padding: 12px;
+    border-radius: 14px;
+  }
+  .tooth-option-image {
+    width: 100%;
+    height: auto;
+  }
+  .tooth-option-label {
+    font-size: 20px;
+  }
+}
+
+/* --- Add service form: Icon + Price row --- */
+.add-service-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-4);
+}
+@media (max-width: 639px) {
+  .add-service-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* --- Dental chart: scroll on small screens --- */
+.dental-chart-wrap {
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: color-mix(in oklab, var(--panel2) 72%, transparent);
+  padding: 12px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.dental-chart-arch {
+  display: grid;
+  grid-template-columns: repeat(16, minmax(0, 1fr));
+  gap: 6px;
+  min-width: 0;
+}
+@media (max-width: 767px) {
+  .dental-chart-arch {
+    gap: 4px;
+    min-width: 320px;
+  }
+}
+@media (max-width: 413px) {
+  .dental-chart-wrap {
+    padding: 8px;
+  }
+  .dental-chart-arch {
+    min-width: 280px;
+    gap: 3px;
+  }
+}
+
+/* --- Staging: new stage input + button --- */
+.staging-new-stage {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.staging-new-stage input {
+  width: 220px;
+  max-width: 100%;
+  min-width: 0;
+}
+@media (max-width: 767px) {
+  .staging-new-stage {
+    width: 100%;
+  }
+  .staging-new-stage input {
+    flex: 1;
+    min-width: 120px;
+  }
+}
+@media (max-width: 413px) {
+  .staging-new-stage input {
+    min-width: 0;
+  }
+}
