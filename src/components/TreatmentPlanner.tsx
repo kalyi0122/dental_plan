@@ -4,7 +4,7 @@ import { Plus, Trash2 } from 'lucide-react'
 import type { JawRegion, PlanProcedure, ServiceCategory, TreatmentPlan } from '../domain/types'
 import { useAppStore } from '../store/useAppStore'
 import { useTranslation } from '../i18n/useTranslation'
-import { DentalChart } from './DentalChart'
+import { DentalChart, type ToothCondition } from './DentalChart'
 import { formatMoney } from '../domain/money'
 import { sortTeethFdi, toDisplayToothLabel } from '../domain/teeth'
 import { Button, Card, Divider, Input, Pill, Select } from './ui'
@@ -30,13 +30,27 @@ export function TreatmentPlanner({ plan }: { plan: TreatmentPlan }) {
 
   const serviceById = useMemo(() => new Map(services.map((s) => [s.id, s])), [services])
 
-  const affectedTeeth = useMemo(() => {
-    const ids: string[] = []
+  const toothConditions = useMemo(() => {
+    const map = new Map<string, ToothCondition>()
     plan.procedures.forEach((p) => {
-      if (p.scope === 'TOOTH' && p.toothIds?.length) ids.push(...p.toothIds)
+      if (p.scope === 'TOOTH' && p.toothIds?.length) {
+        const svc = serviceById.get(p.serviceId)
+        if (svc) {
+          p.toothIds.forEach((id) => {
+            if (!map.has(id)) {
+              map.set(id, { hasCrown: false, hasFilling: false, hasRootCanal: false, hasExtraction: false })
+            }
+            const cond = map.get(id)!
+            if (svc.icon === 'tooth-crown') cond.hasCrown = true
+            if (svc.icon === 'tooth-filling') cond.hasFilling = true
+            if (svc.icon === 'tooth-root-canal') cond.hasRootCanal = true
+            if (svc.icon === 'tooth-extraction') cond.hasExtraction = true
+          })
+        }
+      }
     })
-    return Array.from(new Set(ids))
-  }, [plan.procedures])
+    return map
+  }, [plan.procedures, serviceById])
 
   const filteredServices = useMemo(() => {
     const q = serviceQuery.trim().toLowerCase()
@@ -96,7 +110,7 @@ export function TreatmentPlanner({ plan }: { plan: TreatmentPlan }) {
       >
         <DentalChart
           selected={selectedTeeth}
-          affected={affectedTeeth}
+          conditions={toothConditions}
           numberingSystem={settings.numberingSystem}
           onToggle={(t) => {
             setSelectedTeeth((cur) => (cur.includes(t) ? cur.filter((x) => x !== t) : [...cur, t]))
@@ -149,13 +163,13 @@ export function TreatmentPlanner({ plan }: { plan: TreatmentPlan }) {
                 <div style={styles.serviceIcon}>
                   <Icon name={s.icon} size={24} />
                 </div>
-                <div style={{ minWidth: 0 }}>
-                  <div style={{ fontWeight: 650 }}>{s.name}</div>
-                  <div className="muted" style={{ fontSize: 13 }}>
+                <div style={{ minWidth: 0, overflow: 'hidden' }}>
+                  <div style={{ fontWeight: 650, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.name}</div>
+                  <div className="muted" style={{ fontSize: 13, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     {formatMoney(s.priceCents, settings.currency)}
                   </div>
                   {s.category === 'JAW' && s.jawRegion ? (
-                    <div className="muted" style={{ fontSize: 12 }}>
+                    <div className="muted" style={{ fontSize: 12, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                       {t('planner.jaw')}: {jawLabel(s.jawRegion)}
                     </div>
                   ) : null}
@@ -172,12 +186,12 @@ export function TreatmentPlanner({ plan }: { plan: TreatmentPlan }) {
                       const proc: PlanProcedure =
                         scope === 'TOOTH'
                           ? {
-                              id: nanoid(),
-                              serviceId: s.id,
-                              scope: 'TOOTH',
-                              toothIds: sortTeethFdi(selectedTeeth),
-                              quantity: sortTeethFdi(selectedTeeth).length || 1,
-                            }
+                            id: nanoid(),
+                            serviceId: s.id,
+                            scope: 'TOOTH',
+                            toothIds: sortTeethFdi(selectedTeeth),
+                            quantity: sortTeethFdi(selectedTeeth).length || 1,
+                          }
                           : scope === 'JAW'
                             ? { id: nanoid(), serviceId: s.id, scope: 'JAW', jaw: s.jawRegion ?? jaw, quantity: 1 }
                             : { id: nanoid(), serviceId: s.id, scope: 'GENERAL', quantity: 1 }
@@ -296,9 +310,9 @@ function StageBlock({
           return (
             <div key={p.id} className="proc-row">
               <div className="proc-row-icon" style={styles.procIcon}>{svc ? <Icon name={svc.icon} size={22} /> : '?'}</div>
-              <div className="proc-row-main" style={{ minWidth: 0 }}>
-                <div className="proc-row-title-row">
-                  <span className="proc-row-name">{svc?.name ?? t('planner.missingService')}</span>
+              <div className="proc-row-main" style={{ minWidth: 0, overflow: 'hidden' }}>
+                <div className="proc-row-title-row" style={{ flexWrap: 'nowrap' }}>
+                  <span className="proc-row-name" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{svc?.name ?? t('planner.missingService')}</span>
                   <Pill>
                     {p.scope === 'TOOTH'
                       ? `${(p.toothIds?.length ?? 0) || 0} ${t('planner.tooth')}`
@@ -308,7 +322,7 @@ function StageBlock({
                   </Pill>
                 </div>
                 {p.scope === 'TOOTH' && p.toothIds?.length ? (
-                  <div className="muted proc-row-teeth">
+                  <div className="muted proc-row-teeth" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     {t('planner.teethLabel')}{' '}
                     {sortTeethFdi(p.toothIds)
                       .map((t) => toDisplayToothLabel(t, numberingSystem))

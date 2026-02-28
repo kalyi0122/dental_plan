@@ -2,7 +2,7 @@ import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import type { Patient, Service, Settings, TreatmentPlan } from '../domain/types'
 import { formatMoney } from '../domain/money'
-import { FDI_TEETH, sortTeethFdi, toDisplayToothLabel } from '../domain/teeth'
+import { FDI_TEETH, sortTeethFdi, toDisplayToothLabel, getToothPaths } from '../domain/teeth'
 
 export async function generateQuotePdf({
   patient,
@@ -60,7 +60,7 @@ export async function generateQuotePdf({
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(12)
   doc.text('Affected teeth', margin, chartY)
-  drawChart(doc, margin, chartY + 12, affected, settings.numberingSystem)
+  await drawChartAsync(doc, margin, chartY + 12, affected, settings.numberingSystem)
 
   // Table
   const tableY = chartY + 120
@@ -134,7 +134,33 @@ function collectAffectedTeeth(plan: TreatmentPlan) {
   return Array.from(new Set(ids))
 }
 
-function drawChart(
+async function svgToPngDataUrl(svgString: string, width: number, height: number): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const blob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const img = new Image()
+    img.onload = () => {
+      const canvas = document.createElement('canvas')
+      // Render at 2x resolution for better PDF print quality
+      canvas.width = width * 2
+      canvas.height = height * 2
+      const ctx = canvas.getContext('2d')
+      if (ctx) {
+        ctx.scale(2, 2)
+        ctx.drawImage(img, 0, 0, width, height)
+      }
+      URL.revokeObjectURL(url)
+      resolve(canvas.toDataURL('image/png'))
+    }
+    img.onerror = () => {
+      URL.revokeObjectURL(url)
+      reject(new Error('SVG render failed'))
+    }
+    img.src = url
+  })
+}
+
+async function drawChartAsync(
   doc: jsPDF,
   x: number,
   y: number,
@@ -142,34 +168,74 @@ function drawChart(
   numberingSystem: Settings['numberingSystem'],
 ) {
   const affected = new Set(affectedTeethFdi)
-  const cellW = 28
-  const cellH = 22
-  const gap = 4
-  const upper = FDI_TEETH.slice(0, 16)
-  const lower = FDI_TEETH.slice(16)
+  const cellW = 30
+  const gap = 0
+  const scale = 0.65 // zoom in teeth
+  const rowYUpper = 50
+  const rowYLower = 160
 
-  const drawRow = (row: string[], rowY: number) => {
-    row.forEach((t, i) => {
-      const cx = x + i * (cellW + gap)
+  const upper = FDI_TEETH.slice(0, 16)
+  // reverse lower jaw so 48 (Universal 32) is on the left
+  const lower = FDI_TEETH.slice(16).reverse()
+
+  const canvasW = 16 * (cellW + gap)
+  const canvasH = 220
+
+  let svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${canvasW}" height="${canvasH}" viewBox="0 0 ${canvasW} ${canvasH}">`
+
+  const addRow = (seq: string[], rowY: number) => {
+    seq.forEach((t, i) => {
+      const cx = i * (cellW + gap)
       const on = affected.has(t)
-      doc.setDrawColor(200)
+      const isUp = t.startsWith('1') || t.startsWith('2')
+
+      const lbl = toDisplayToothLabel(t, numberingSystem)
+      // Number position
+      const labelY = isUp ? rowY - 40 : rowY + 50
+
+      svg += `<text x="${cx + cellW / 2}" y="${labelY}" font-family="Helvetica, Arial, sans-serif" font-size="14" font-weight="bold" fill="#111111" text-anchor="middle" dy="0.35em">${lbl}</text>`
+
+      const paths = getToothPaths(t)
+      const gX = cx + cellW / 2
+      const gY = rowY
+
+      svg += `<g transform="translate(${gX}, ${gY}) scale(${scale})">`
+
+      // root
+      svg += `<path d="${paths.root}" fill="#ffffff" stroke="#111111" stroke-width="2.5" stroke-linejoin="round" />`
+      // crown
+      svg += `<path d="${paths.crown}" fill="#ffffff" stroke="#111111" stroke-width="2.5" stroke-linejoin="round" />`
+
       if (on) {
-        doc.setFillColor(36, 192, 138)
-        doc.roundedRect(cx, rowY, cellW, cellH, 6, 6, 'FD')
-        doc.setTextColor(255)
-      } else {
-        doc.setFillColor(248, 248, 248)
-        doc.roundedRect(cx, rowY, cellW, cellH, 6, 6, 'S')
-        doc.setTextColor(90)
+        // dense light blue scribble
+        svg += `<g stroke="#5bc0de" stroke-width="6" stroke-linecap="round">`
+        if (isUp) {
+          for (let sy = -50; sy <= 20; sy += 10) {
+            svg += `<line x1="-15" y1="${sy}" x2="15" y2="${sy - 4}" />`
+          }
+        } else {
+          for (let sy = -20; sy <= 50; sy += 10) {
+            svg += `<line x1="-15" y1="${sy}" x2="15" y2="${sy - 4}" />`
+          }
+        }
+        svg += `</g>`
       }
-      doc.setFontSize(9)
-      doc.text(toDisplayToothLabel(t, numberingSystem), cx + cellW / 2, rowY + 14, { align: 'center' })
+
+      svg += `</g>`
     })
   }
 
-  drawRow(upper, y)
-  drawRow(lower, y + cellH + 8)
-  doc.setTextColor(0)
+  addRow(upper, rowYUpper)
+  addRow(lower, rowYLower)
+
+  svg += `</svg>`
+
+  try {
+    const pngData = await svgToPngDataUrl(svg, canvasW, canvasH)
+    doc.addImage(pngData, 'PNG', x, y, canvasW, canvasH)
+  } catch (e) {
+    console.error('Failed to render tooth chart svg', e)
+  }
 }
 
 function buildRows(

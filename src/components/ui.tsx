@@ -112,9 +112,8 @@ export function Avatar({
         width: size,
         height: size,
         borderRadius: Math.max(10, Math.round(size / 3)),
-        background: `linear-gradient(180deg, ${color ?? 'var(--primary)'}, color-mix(in oklab, ${
-          color ?? 'var(--primary)'
-        } 22%, var(--panel)))`,
+        background: `linear-gradient(180deg, ${color ?? 'var(--primary)'}, color-mix(in oklab, ${color ?? 'var(--primary)'
+          } 22%, var(--panel)))`,
         display: 'grid',
         placeItems: 'center',
         color: 'white',
@@ -135,6 +134,7 @@ const styles: Record<string, React.CSSProperties> = {
     borderRadius: 'var(--radius-lg)',
     boxShadow: 'var(--shadow)',
     padding: 'var(--space-5)',
+    minWidth: 0,
   },
   cardHeader: {
     display: 'flex',
