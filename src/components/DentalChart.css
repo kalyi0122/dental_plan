@@ -1,0 +1,30 @@
+/* styles for dental chart svg elements */
+
+/* default root/crown shapes */
+.tooth-root,
+.tooth-crown {
+  transition: fill 0.2s, stroke 0.2s;
+}
+
+/* crown procedure -> solid green fill */
+.state-crown .tooth-crown {
+  fill: #38A169 !important;
+  stroke: #25603b !important;
+}
+
+/* filling procedure -> light blue fill */
+.state-filling .tooth-crown {
+  fill: #60a5fa !important;
+  stroke: #3b82f6 !important;
+}
+
+/* extraction -> dark root & crown + red X overlay */
+.state-extracted .tooth-root,
+.state-extracted .tooth-crown {
+  fill: #111111 !important;
+  stroke: #555555 !important;
+}
+.state-extracted .tooth-cross {
+  stroke: #e53e3e;
+  stroke-width: 4;
+}

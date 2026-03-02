@@ -1,4 +1,4 @@
-import { Camera, Ruler, Scan, Stethoscope } from 'lucide-react'
+﻿import { Camera, Ruler, Scan, Stethoscope } from 'lucide-react'
 
 type IconProps = { size?: number; color?: string }
 type IconCmp = React.ComponentType<IconProps>
@@ -65,6 +65,43 @@ const ToothVeneer: IconCmp = ({ size }) => (
   </Svg>
 )
 
+const ToothBlueBlock: IconCmp = ({ size }) => (
+  <Svg size={size}>
+    <rect x="4" y="4" width="16" height="16" fill="#72B6DF" />
+  </Svg>
+)
+
+const ToothBlueCap: IconCmp = ({ size }) => (
+  <Svg size={size}>
+    <path
+      d="M4 16 C4 11 6.5 6 9.5 6 C10.7 6 11.4 6.5 12 7.3 C12.6 6.5 13.3 6 14.5 6 C17.5 6 20 11 20 16 L17.2 20 L14.9 17.8 H9.1 L6.8 20 Z"
+      fill="#1FA8E5"
+    />
+  </Svg>
+)
+
+const ToothPurpleCap: IconCmp = ({ size }) => (
+  <Svg size={size}>
+    <path
+      d="M4 16 C4 11 6.5 6 9.5 6 C10.7 6 11.4 6.5 12 7.3 C12.6 6.5 13.3 6 14.5 6 C17.5 6 20 11 20 16 L17.2 20 L14.9 17.8 H9.1 L6.8 20 Z"
+      fill="#A447EF"
+    />
+  </Svg>
+)
+
+const ToothBlueGreenCap: IconCmp = ({ size }) => (
+  <Svg size={size}>
+    <path
+      d="M4 16 C4 11 6.5 6 9.5 6 C10.7 6 11.4 6.5 12 7.3 C12.6 6.5 13.3 6 14.5 6 C17.5 6 20 11 20 16 L17.2 20 L14.9 17.8 H9.1 L6.8 20 Z"
+      fill="#1FA8E5"
+    />
+    <path
+      d="M7 15 C7 12.2 8.7 10 10.8 10 C11.3 10 11.7 10.2 12 10.6 C12.3 10.2 12.7 10 13.2 10 C15.3 10 17 12.2 17 15 L15.4 17.3 L14.2 16.2 H9.8 L8.6 17.3 Z"
+      fill="#34E33C"
+    />
+  </Svg>
+)
+
 // Define remaining standard fallback icons
 const JawTeeth: IconCmp = ({ size }) => (
   <Svg size={size}>
@@ -82,6 +119,10 @@ export const ICONS: Record<string, IconCmp> = {
   'tooth-extraction': ToothExtraction,
   'tooth-root-canal': ToothRootCanal,
   'tooth-veneer': ToothVeneer,
+  'tooth-blue-block': ToothBlueBlock,
+  'tooth-blue-cap': ToothBlueCap,
+  'tooth-purple-cap': ToothPurpleCap,
+  'tooth-blue-green-cap': ToothBlueGreenCap,
 
   // Legacy mappings for rest of app
   'tooth-healthy': ToothPin,
@@ -110,7 +151,7 @@ export const ICONS: Record<string, IconCmp> = {
   sparkles: ToothPin,
 }
 
-// Exactly the 8 options from the iOS screenshot
+// 12 options for the service icon picker
 export const ICON_OPTIONS = [
   'tooth-pin',
   'implant',
@@ -120,17 +161,25 @@ export const ICON_OPTIONS = [
   'tooth-extraction',
   'tooth-root-canal',
   'tooth-veneer',
+  'tooth-blue-block',
+  'tooth-blue-cap',
+  'tooth-purple-cap',
+  'tooth-blue-green-cap',
 ]
 
 export const ICON_LABELS: Record<string, string> = {
-  'tooth-pin': 'Штифт',
-  'implant': 'Имплант',
+  'tooth-pin': 'Вкладка',
+  implant: 'Имплант',
   'tooth-crown': 'Коронка',
-  'tooth-inlay': 'Вкладка',
+  'tooth-inlay': 'Синус лифтинг',
   'tooth-filling': 'Пломба',
   'tooth-extraction': 'Удаление',
   'tooth-root-canal': 'Канал',
-  'tooth-veneer': 'Винир',
+  'tooth-veneer': 'Наращивание кости',
+  'tooth-blue-block': 'Формирователь десны',
+  'tooth-blue-cap': 'Коронка',
+  'tooth-purple-cap': 'Коронка',
+  'tooth-blue-green-cap': 'Винир',
 }
 
 export function Icon({ name, size = 18 }: { name: string; size?: number }) {
@@ -142,10 +191,9 @@ export function Icon({ name, size = 18 }: { name: string; size?: number }) {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      flexShrink: 0
+      flexShrink: 0,
     }}>
       <Cmp size={size} />
     </div>
   )
 }
-

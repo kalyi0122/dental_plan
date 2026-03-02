@@ -1,13 +1,8 @@
 import { FDI_TEETH, toDisplayToothLabel, getToothPaths } from '../domain/teeth'
+import type { ToothCondition } from '../domain/teeth'
 import type { ToothNumberingSystem } from '../domain/types'
 import { useTranslation } from '../i18n/useTranslation'
-
-export type ToothCondition = {
-  hasCrown?: boolean
-  hasFilling?: boolean
-  hasRootCanal?: boolean
-  hasExtraction?: boolean
-}
+import './DentalChart.css'
 
 export function DentalChart({
   selected,
@@ -113,25 +108,44 @@ function ToothNode({
 }) {
   const { root, crown } = getToothPaths(fdi)
   const isUp = fdi.startsWith('1') || fdi.startsWith('2')
+  const visualIcon = condition?.visualIcon
 
-  // Apply visual colors for conditions exactly as requested
-  let rootColor = selected ? 'rgba(56, 182, 255, 0.25)' : '#FFF0E6' // slight pinkish/peach root like in real anatomy
+  // derive a single state class for the tooth (used by CSS file)
+  let stateClass = ''
+  if (condition?.hasExtraction) stateClass = 'state-extracted'
+
+  // base colors (selection highlight); CSS classes will override when a procedure is present
+  let rootColor = selected ? 'rgba(56, 182, 255, 0.25)' : '#FFF0E6'
   let rootStroke = '#D1D5DB'
-  let crownColor = selected ? 'rgba(56, 182, 255, 0.4)' : '#FFFFFF' // pure white crown
+  let crownColor = selected ? 'rgba(56, 182, 255, 0.4)' : '#FFFFFF'
   let crownStroke = '#9CA3AF'
 
-  if (condition?.hasExtraction) {
-    rootColor = '#111111'
-    crownColor = '#111111'
-    rootStroke = '#555555'
-    crownStroke = '#555555'
-  } else if (condition?.hasCrown) {
-    crownColor = '#FCD34D' // Yellow/Gold Crown
-    crownStroke = '#B45309'
+  if (visualIcon === 'tooth-blue-cap') {
+    crownColor = '#1FA8E5'
+    crownStroke = '#1579A7'
+  } else if (visualIcon === 'tooth-purple-cap') {
+    crownColor = '#A447EF'
+    crownStroke = '#7E2FC4'
+  } else if (visualIcon === 'tooth-blue-green-cap') {
+    crownColor = '#1FA8E5'
+    crownStroke = '#1579A7'
+  } else if (visualIcon === 'tooth-inlay') {
+    crownColor = '#F9CE1D'
+    crownStroke = '#D6A700'
+  } else if (visualIcon === 'tooth-filling') {
+    crownColor = '#24E035'
+    crownStroke = '#1CAA2A'
+  } else if (visualIcon === 'tooth-crown') {
+    crownColor = '#38A169'
+    crownStroke = '#25603B'
+  } else if (visualIcon === 'implant') {
+    crownColor = '#00B4D8'
+    crownStroke = '#02839E'
   }
 
   return (
     <div
+      className={stateClass}
       style={{ ...styles.nodeWrap, cursor: 'pointer' }}
       onClick={(e) => {
         if (e.shiftKey && onSetSelected) {
@@ -154,6 +168,7 @@ function ToothNode({
       }}>
         {/* Draw Root */}
         <path
+          className="tooth-root"
           d={root}
           fill={rootColor}
           stroke={rootStroke}
@@ -170,18 +185,44 @@ function ToothNode({
             strokeLinecap="round"
           />
         )}
+        {visualIcon === 'tooth-pin' && !condition?.hasExtraction && (
+          <rect x="-1.6" y={isUp ? -22 : -2} width="3.2" height="24" rx="1.6" fill="#55D6FF" />
+        )}
+
+        {/* extraction cross */}
+        {condition?.hasExtraction && (
+          <g className="tooth-cross" stroke="#E53E3E" strokeWidth="4" strokeLinecap="round">
+            <line x1="-15" y1="-15" x2="15" y2="15" />
+            <line x1="-15" y1="15" x2="15" y2="-15" />
+          </g>
+        )}
 
         {/* Draw Crown */}
         <path
+          className="tooth-crown"
           d={crown}
           fill={crownColor}
           stroke={crownStroke}
           strokeWidth="2.5"
           strokeLinejoin="round"
         />
+        {visualIcon === 'tooth-blue-block' && !condition?.hasExtraction && (
+          <rect x="-6.5" y={isUp ? 5.5 : -12.5} width="13" height="13" fill="#72B6DF" />
+        )}
+        {visualIcon === 'tooth-veneer' && !condition?.hasExtraction && (
+          <rect x="-9" y={isUp ? 8.5 : -14.5} width="18" height="5.5" rx="1.2" fill="#24E035" />
+        )}
+        {visualIcon === 'tooth-blue-green-cap' && !condition?.hasExtraction && (
+          <path
+            d={isUp ? "M-7,12 Q0,18 7,12 Q0,26 -7,12" : "M-7,-12 Q0,-18 7,-12 Q0,-26 -7,-12"}
+            fill="#34E33C"
+            stroke="#24C92D"
+            strokeWidth="1.4"
+          />
+        )}
 
         {/* Draw Filling annotation if present */}
-        {condition?.hasFilling && !condition?.hasCrown && !condition?.hasExtraction && (
+        {condition?.hasFilling && !condition?.hasCrown && !condition?.hasExtraction && !visualIcon && (
           <path
             d={isUp ? "M-7,12 Q0,18 7,12 Q0,26 -7,12" : "M-7,-12 Q0,-18 7,-12 Q0,-26 -7,-12"}
             fill="#60A5FA" /* Blue filling */

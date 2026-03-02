@@ -4,9 +4,9 @@ import { Plus, Trash2 } from 'lucide-react'
 import type { JawRegion, PlanProcedure, ServiceCategory, TreatmentPlan } from '../domain/types'
 import { useAppStore } from '../store/useAppStore'
 import { useTranslation } from '../i18n/useTranslation'
-import { DentalChart, type ToothCondition } from './DentalChart'
+import { DentalChart } from './DentalChart'
 import { formatMoney } from '../domain/money'
-import { sortTeethFdi, toDisplayToothLabel } from '../domain/teeth'
+import { sortTeethFdi, toDisplayToothLabel, mapPlanToToothConditions } from '../domain/teeth'
 import { Button, Card, Divider, Input, Pill, Select } from './ui'
 import { Icon } from './Icon'
 
@@ -30,27 +30,8 @@ export function TreatmentPlanner({ plan }: { plan: TreatmentPlan }) {
 
   const serviceById = useMemo(() => new Map(services.map((s) => [s.id, s])), [services])
 
-  const toothConditions = useMemo(() => {
-    const map = new Map<string, ToothCondition>()
-    plan.procedures.forEach((p) => {
-      if (p.scope === 'TOOTH' && p.toothIds?.length) {
-        const svc = serviceById.get(p.serviceId)
-        if (svc) {
-          p.toothIds.forEach((id) => {
-            if (!map.has(id)) {
-              map.set(id, { hasCrown: false, hasFilling: false, hasRootCanal: false, hasExtraction: false })
-            }
-            const cond = map.get(id)!
-            if (svc.icon === 'tooth-crown') cond.hasCrown = true
-            if (svc.icon === 'tooth-filling') cond.hasFilling = true
-            if (svc.icon === 'tooth-root-canal') cond.hasRootCanal = true
-            if (svc.icon === 'tooth-extraction') cond.hasExtraction = true
-          })
-        }
-      }
-    })
-    return map
-  }, [plan.procedures, serviceById])
+  // re‑use the same logic that the PDF generator uses; keeps the UI and PDF in sync
+  const toothConditions = useMemo(() => mapPlanToToothConditions(plan, serviceById), [plan, serviceById])
 
   const filteredServices = useMemo(() => {
     const q = serviceQuery.trim().toLowerCase()
@@ -64,8 +45,9 @@ export function TreatmentPlanner({ plan }: { plan: TreatmentPlan }) {
 
   const proceduresByStage = useMemo(() => {
     const map = new Map<string, PlanProcedure[]>()
+    const stageIdSet = new Set(stages.map((s) => s.id))
     plan.procedures.forEach((p) => {
-      const key = p.stageId ?? '__unstaged__'
+      const key = p.stageId && stageIdSet.has(p.stageId) ? p.stageId : '__unstaged__'
       if (!map.has(key)) map.set(key, [])
       map.get(key)!.push(p)
     })
@@ -227,8 +209,7 @@ export function TreatmentPlanner({ plan }: { plan: TreatmentPlan }) {
             <Button
               variant="primary"
               onClick={() => {
-                const name = newStageName.trim()
-                if (!name) return
+                const name = newStageName.trim() || `Этап ${stages.length + 1}`
                 updatePlan(plan.id, (draft) => {
                   const maxOrder = draft.stages.reduce((m, s) => Math.max(m, s.order), 0)
                   draft.stages.push({ id: nanoid(), name, order: maxOrder + 1 })
@@ -247,6 +228,7 @@ export function TreatmentPlanner({ plan }: { plan: TreatmentPlan }) {
             procedures={proceduresByStage.get('__unstaged__') ?? []}
             currency={settings.currency}
             planId={plan.id}
+            stageId={undefined}
             stageOptions={stageOptions}
             serviceById={serviceById}
           />
@@ -258,6 +240,7 @@ export function TreatmentPlanner({ plan }: { plan: TreatmentPlan }) {
               procedures={proceduresByStage.get(st.id) ?? []}
               currency={settings.currency}
               planId={plan.id}
+              stageId={st.id}
               stageOptions={stageOptions}
               serviceById={serviceById}
             />
@@ -278,6 +261,7 @@ function StageBlock({
   procedures,
   currency,
   planId,
+  stageId,
   stageOptions,
   serviceById,
 }: {
@@ -285,6 +269,7 @@ function StageBlock({
   procedures: PlanProcedure[]
   currency: string
   planId: string
+  stageId?: string
   stageOptions: { value: string; label: string }[]
   serviceById: Map<string, { name: string; priceCents: number; icon: string }>
 }) {
@@ -302,7 +287,24 @@ function StageBlock({
     <div style={styles.stageBlock}>
       <div style={styles.stageHeader}>
         <div style={{ fontWeight: 750 }}>{title}</div>
-        <Pill>{formatMoney(subtotal, currency as any)}</Pill>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <Pill>{formatMoney(subtotal, currency as any)}</Pill>
+          {stageId ? (
+            <Button
+              title="Удалить этап"
+              onClick={() => {
+                updatePlan(planId, (draft) => {
+                  draft.stages = draft.stages.filter((s) => s.id !== stageId)
+                  draft.procedures.forEach((p) => {
+                    if (p.stageId === stageId) p.stageId = undefined
+                  })
+                })
+              }}
+            >
+              <Trash2 size={14} />
+            </Button>
+          ) : null}
+        </div>
       </div>
       <div style={{ display: 'grid', gap: 8 }}>
         {procedures.map((p) => {

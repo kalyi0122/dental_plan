@@ -129,7 +129,8 @@ export function Avatar({
 
 const styles: Record<string, React.CSSProperties> = {
   card: {
-    background: 'var(--panel)',
+    background:
+      'linear-gradient(180deg, color-mix(in oklab, var(--panel) 95%, transparent), color-mix(in oklab, var(--panel2) 84%, var(--panel)))',
     border: '1px solid var(--border)',
     borderRadius: 'var(--radius-lg)',
     boxShadow: 'var(--shadow)',
@@ -151,28 +152,32 @@ const styles: Record<string, React.CSSProperties> = {
   button: {
     borderRadius: 'var(--radius-md)',
     border: '1px solid var(--border)',
-    background: 'transparent',
+    background: 'color-mix(in oklab, var(--panel2) 76%, transparent)',
     padding: '10px 16px',
     minHeight: 40,
     cursor: 'pointer',
     color: 'var(--text)',
     fontSize: 14,
     fontWeight: 500,
-    transition: 'border-color 0.15s ease, background 0.15s ease, color 0.15s ease',
+    boxShadow: '0 8px 18px rgba(3, 8, 20, 0.1)',
+    transition: 'border-color 0.2s ease, background 0.2s ease, color 0.2s ease, transform 0.2s ease',
     display: 'inline-flex',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 'var(--space-2)',
   },
   buttonPrimary: {
-    background: 'linear-gradient(180deg, color-mix(in oklab, var(--primary) 95%, white), var(--primary))',
+    background:
+      'linear-gradient(180deg, color-mix(in oklab, var(--primary) 92%, white), color-mix(in oklab, var(--primary) 92%, #1142a2))',
     border: '1px solid color-mix(in oklab, var(--primary) 55%, var(--border))',
     color: 'white',
+    boxShadow: '0 10px 22px color-mix(in oklab, var(--primary) 30%, transparent)',
   },
   buttonDanger: {
-    background: 'linear-gradient(180deg, color-mix(in oklab, var(--danger) 90%, white), var(--danger))',
+    background: 'linear-gradient(180deg, color-mix(in oklab, var(--danger) 88%, white), var(--danger))',
     border: '1px solid color-mix(in oklab, var(--danger) 55%, var(--border))',
     color: 'white',
+    boxShadow: '0 10px 22px color-mix(in oklab, var(--danger) 26%, transparent)',
   },
   input: {
     width: '100%',
@@ -180,10 +185,11 @@ const styles: Record<string, React.CSSProperties> = {
     minHeight: 40,
     borderRadius: 'var(--radius-md)',
     border: '1px solid var(--border)',
-    background: 'color-mix(in oklab, var(--panel2) 85%, transparent)',
+    background: 'color-mix(in oklab, var(--panel2) 88%, transparent)',
     outline: 'none',
     fontSize: 14,
-    transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
+    boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+    transition: 'border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease',
   },
   select: {
     width: '100%',
@@ -191,9 +197,10 @@ const styles: Record<string, React.CSSProperties> = {
     minHeight: 40,
     borderRadius: 'var(--radius-md)',
     border: '1px solid var(--border)',
-    background: 'color-mix(in oklab, var(--panel2) 85%, transparent)',
+    background: 'color-mix(in oklab, var(--panel2) 88%, transparent)',
     fontSize: 14,
     cursor: 'pointer',
+    boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
   },
   textarea: {
     width: '100%',
@@ -201,9 +208,10 @@ const styles: Record<string, React.CSSProperties> = {
     padding: '10px 12px',
     borderRadius: 'var(--radius-md)',
     border: '1px solid var(--border)',
-    background: 'color-mix(in oklab, var(--panel2) 85%, transparent)',
+    background: 'color-mix(in oklab, var(--panel2) 88%, transparent)',
     resize: 'vertical',
     fontSize: 14,
+    boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
   },
   pill: {
     display: 'inline-flex',
@@ -214,7 +222,8 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: 12,
     fontWeight: 500,
     color: 'var(--muted)',
-    background: 'color-mix(in oklab, var(--panel2) 70%, transparent)',
+    background:
+      'linear-gradient(180deg, color-mix(in oklab, var(--panel2) 82%, transparent), color-mix(in oklab, var(--panel2) 70%, transparent))',
   },
   divider: {
     height: 1,

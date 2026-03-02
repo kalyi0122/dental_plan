@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { FileDown, Plus } from 'lucide-react'
+import { FileDown } from 'lucide-react'
 import { useShallow } from 'zustand/react/shallow'
 import { useAppStore } from '../store/useAppStore'
 import { useTranslation } from '../i18n/useTranslation'
 import { formatMoney } from '../domain/money'
-import { Avatar, Button, Card, Pill, Select } from '../components/ui'
+import { Avatar, Button, Card, Pill } from '../components/ui'
 import { TreatmentPlanner } from '../components/TreatmentPlanner'
 import { generateQuotePdf } from '../pdf/generateQuotePdf'
 
@@ -100,25 +100,6 @@ export function PatientDetailPage() {
           </div>
 
           <div className="patient-detail-actions">
-            {plans.length > 0 && (
-              <div className="patient-detail-plan-select">
-                <Select
-                  value={selectedPlan?.id ?? ''}
-                  onChange={(v) => setSelectedPlanId(v)}
-                  options={plans.map((p) => ({ value: p.id, label: p.title }))}
-                />
-              </div>
-            )}
-            <Button
-              variant="ghost"
-              onClick={() => {
-                const id = createPlanForPatient(patient.id)
-                setSelectedPlanId(id)
-              }}
-            >
-              <Plus size={16} />
-              {t('patient.newPlan')}
-            </Button>
             {selectedPlan && (
               <Button
                 variant="primary"
