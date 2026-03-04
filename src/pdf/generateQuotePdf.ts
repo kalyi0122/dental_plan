@@ -1,6 +1,6 @@
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
-import type { Patient, Service, Settings, TreatmentPlan } from '../domain/types'
+import type { Patient, Service, Settings, ToothNumberingSystem, TreatmentPlan } from '../domain/types'
 import { formatMoney } from '../domain/money'
 import {
   sortTeethFdi,
@@ -143,7 +143,7 @@ async function drawChartAsync(
   width: number,
   height: number,
   toothConditions: Map<string, ToothCondition>,
-  numberingSystem: string,
+  numberingSystem: ToothNumberingSystem,
 ) {
   const svg = buildDentalChartSvg(toothConditions, numberingSystem)
   try {
