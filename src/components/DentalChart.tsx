@@ -350,7 +350,6 @@ function ToothNode({
         {visualIcon === 'tooth-blue-green-cap' && !condition?.hasExtraction && (
           <g transform={`scale(${iconScale})`}>
             <g transform="scale(1.9)">
-              <rect x="-11" y={isUp ? -9.2 : 13.8} width="22" height="4.2" rx="0.8" fill="#EAB6BE" />
               <path
                 d={isUp ? 'M-9,3 C-7,0 -3,-1 0,1.8 C3,-1 7,0 9,3 L7,12.5 C5,15.2 3.2,14.7 0,13 C-3.2,14.7 -5,15.2 -7,12.5 Z' : 'M-9,-3 C-7,0 -3,1 0,-1.8 C3,1 7,0 9,-3 L7,-12.5 C5,-15.2 3.2,-14.7 0,-13 C-3.2,-14.7 -5,-15.2 -7,-12.5 Z'}
                 fill="#1FA8E5"

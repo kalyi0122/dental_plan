@@ -259,7 +259,7 @@ export function buildDentalChartSvg(
   const cellW = 30
   const gap = 0
   const scale = 0.65 // zoom in teeth
-  const rowYUpper = 50
+  const rowYUpper = 88
   const rowYLower = 160
 
   const upper = FDI_TEETH.slice(0, 16)
@@ -288,7 +288,7 @@ export function buildDentalChartSvg(
       const isUp = t.startsWith('1') || t.startsWith('2')
 
       const lbl = toDisplayToothLabel(t, numberingSystem)
-      const labelY = isUp ? rowY - 40 : rowY + 50
+      const labelY = isUp ? rowY - 58 : rowY + 54
       svg += `<text x="${cx + cellW / 2}" y="${labelY}" font-family="Helvetica, Arial, sans-serif" font-size="14" font-weight="bold" fill="#111111" text-anchor="middle" dy="0.35em">${lbl}</text>`
 
       const paths = getToothPaths(t)
@@ -461,7 +461,6 @@ export function buildDentalChartSvg(
         const inner = isUp ? 'M-8.5,14.5 Q0,22 8.5,14.5 Q0,31 -8.5,14.5' : 'M-8.5,-14.5 Q0,-22 8.5,-14.5 Q0,-31 -8.5,-14.5'
         svg += `<g transform="scale(${iconScale})">`
         svg += `<g transform="scale(1.9)">`
-        svg += `<rect x="-11" y="${isUp ? -9.2 : 13.8}" width="22" height="4.2" rx="0.8" fill="#EAB6BE" />`
         svg += `<path d="${isUp ? 'M-9,3 C-7,0 -3,-1 0,1.8 C3,-1 7,0 9,3 L7,12.5 C5,15.2 3.2,14.7 0,13 C-3.2,14.7 -5,15.2 -7,12.5 Z' : 'M-9,-3 C-7,0 -3,1 0,-1.8 C3,1 7,0 9,-3 L7,-12.5 C5,-15.2 3.2,-14.7 0,-13 C-3.2,-14.7 -5,-15.2 -7,-12.5 Z'}" fill="#1FA8E5" stroke="#1579A7" stroke-width="1.2" stroke-linejoin="round"${isUp ? '' : ' transform="translate(0,5)"'} />`
         svg += `<g transform="translate(0,${isUp ? -12 : 15})"><path d="${inner}" fill="#34E33C" stroke="#24C92D" stroke-width="0.95" /></g>`
         svg += `</g>`
