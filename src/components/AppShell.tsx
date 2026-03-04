@@ -11,6 +11,24 @@ const navItems = [
   { to: '/settings', labelKey: 'nav.settings', icon: SettingsIcon },
 ]
 
+function MogulLogo() {
+  return (
+    <svg viewBox="0 0 40 40" width="30" height="30" aria-hidden="true">
+      <g opacity="0.85" stroke="#2D6DFF" strokeWidth="1.7" strokeLinecap="round">
+        <line x1="0.5" y1="11.5" x2="12" y2="11.5" />
+        <line x1="0" y1="15" x2="11" y2="15" />
+        <line x1="1" y1="18.5" x2="12.8" y2="18.5" />
+        <line x1="2" y1="22" x2="11.5" y2="22" />
+      </g>
+      <path
+        d="M9.6 21.5 C9.6 14.1 14.5 7.4 20.6 7.4 C22.9 7.4 24.4 8.3 25.6 9.7 C26.8 8.3 28.3 7.4 30.6 7.4 C36.7 7.4 41.6 14.1 41.6 21.5 L37.2 29 L33.6 25.7 H16.6 L13 29 Z"
+        fill="#246BFF"
+      />
+      <text x="25" y="24" textAnchor="middle" fill="#111111" fontSize="13.6" fontWeight="900">$</text>
+    </svg>
+  )
+}
+
 function resolveTheme(theme: 'system' | 'light' | 'dark') {
   if (theme === 'light' || theme === 'dark') return theme
   return window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
@@ -74,7 +92,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       />
       <aside className={`app-sidebar ${isMobileNavOpen ? 'open' : ''}`} style={styles.sidebar}>
         <div style={styles.brand}>
-          <div style={styles.logo} aria-hidden />
+          <div style={styles.logo} aria-hidden>
+            <MogulLogo />
+          </div>
           <div>
             <div style={{ fontWeight: 700, letterSpacing: 0.2 }}>{t('app.title')}</div>
             <div style={{ fontSize: 12 }} className="muted">
@@ -173,9 +193,11 @@ const styles: Record<string, React.CSSProperties> = {
     height: 40,
     borderRadius: 'var(--radius-md)',
     background:
-      'radial-gradient(circle at 24% 24%, rgba(96,157,255,0.95), rgba(96,157,255,0.2) 58%), radial-gradient(circle at 74% 74%, rgba(31,202,150,0.72), transparent 66%)',
+      'linear-gradient(180deg, color-mix(in oklab, var(--panel2) 88%, transparent), color-mix(in oklab, var(--panel) 94%, black))',
     border: '1px solid var(--border)',
     boxShadow: '0 10px 24px rgba(3, 8, 20, 0.2)',
+    display: 'grid',
+    placeItems: 'center',
   },
   nav: {
     display: 'flex',

@@ -24,7 +24,6 @@ export function TreatmentPlanner({ plan }: { plan: TreatmentPlan }) {
 
   const [selectedTeeth, setSelectedTeeth] = useState<string[]>([])
   const [category, setCategory] = useState<ServiceCategory>('TOOTH')
-  const [jaw, setJaw] = useState<JawRegion>('MAXILLA')
   const [serviceQuery, setServiceQuery] = useState('')
   const [newStageName, setNewStageName] = useState('')
 
@@ -118,25 +117,10 @@ export function TreatmentPlanner({ plan }: { plan: TreatmentPlan }) {
                 options={CATEGORY_OPTIONS.map((c) => ({ value: c.value, label: t(c.labelKey) }))}
               />
             </div>
-            {category === 'JAW' ? (
-              <div>
-                <div style={styles.label}>{t('planner.jawRegion')}</div>
-                <Select
-                  value={jaw}
-                  onChange={(v) => setJaw(v as JawRegion)}
-                  options={[
-                    { value: 'MAXILLA', label: t('planner.maxilla') },
-                    { value: 'MANDIBLE', label: t('planner.mandible') },
-                    { value: 'BOTH', label: t('planner.bothJaws') },
-                  ]}
-                />
-              </div>
-            ) : (
-              <div>
-                <div style={styles.label}>{t('planner.search')}</div>
-                <Input value={serviceQuery} onChange={(e) => setServiceQuery(e.target.value)} placeholder={t('planner.typeToFilter')} />
-              </div>
-            )}
+            <div>
+              <div style={styles.label}>{t('planner.search')}</div>
+              <Input value={serviceQuery} onChange={(e) => setServiceQuery(e.target.value)} placeholder={t('planner.typeToFilter')} />
+            </div>
           </div>
 
           <div style={{ display: 'grid', gap: 8, maxHeight: 520, overflow: 'auto', paddingRight: 4 }}>
@@ -165,6 +149,22 @@ export function TreatmentPlanner({ plan }: { plan: TreatmentPlan }) {
                       return
                     }
                     updatePlan(plan.id, (draft) => {
+                      const isJawMultiTooth = scope === 'JAW' && (
+                        s.icon === 'tooth-blue-block' ||
+                        s.icon === 'tooth-bridge-x6' ||
+                        s.icon === 'tooth-bridge-x7'
+                      )
+                      if (isJawMultiTooth) {
+                        // Keep one marker per icon+jaw. "BOTH" overrides upper/lower and vice versa.
+                        const targetJaw: JawRegion = s.jawRegion ?? 'BOTH'
+                        draft.procedures = draft.procedures.filter((p) => {
+                          const ps = serviceById.get(p.serviceId)
+                          if (!(p.scope === 'JAW' && ps?.icon === s.icon)) return true
+                          if (targetJaw === 'BOTH') return false
+                          if (p.jaw === 'BOTH') return false
+                          return p.jaw !== targetJaw
+                        })
+                      }
                       const proc: PlanProcedure =
                         scope === 'TOOTH'
                           ? {
@@ -175,7 +175,14 @@ export function TreatmentPlanner({ plan }: { plan: TreatmentPlan }) {
                             quantity: sortTeethFdi(selectedTeeth).length || 1,
                           }
                           : scope === 'JAW'
-                            ? { id: nanoid(), serviceId: s.id, scope: 'JAW', jaw: s.jawRegion ?? jaw, quantity: 1 }
+                            ? {
+                              id: nanoid(),
+                              serviceId: s.id,
+                              scope: 'JAW',
+                              // Jaw is taken from the selected service itself.
+                              jaw: s.jawRegion ?? 'BOTH',
+                              quantity: 1,
+                            }
                             : { id: nanoid(), serviceId: s.id, scope: 'GENERAL', quantity: 1 }
                       draft.procedures.push(proc)
                     })

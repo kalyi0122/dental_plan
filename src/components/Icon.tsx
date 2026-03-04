@@ -1,4 +1,4 @@
-﻿import { Camera, Ruler, Scan, Stethoscope } from 'lucide-react'
+import { Camera, Ruler, Scan, Stethoscope } from 'lucide-react'
 
 type IconProps = { size?: number; color?: string }
 type IconCmp = React.ComponentType<IconProps>
@@ -67,7 +67,56 @@ const ToothVeneer: IconCmp = ({ size }) => (
 
 const ToothBlueBlock: IconCmp = ({ size }) => (
   <Svg size={size}>
-    <rect x="4" y="4" width="16" height="16" fill="#72B6DF" />
+    <defs>
+      <linearGradient id="blueBlockGrad" x1="4" y1="4" x2="20" y2="20" gradientUnits="userSpaceOnUse">
+        <stop offset="0" stopColor="#4D8BFF" />
+        <stop offset="1" stopColor="#2E5FEC" />
+      </linearGradient>
+    </defs>
+    <rect x="4.5" y="4.5" width="15" height="15" rx="1.4" fill="url(#blueBlockGrad)" />
+    <rect x="1.2" y="10.2" width="3.8" height="3.6" rx="0.5" fill="#3E78FF" />
+    <rect x="19" y="10.2" width="3.8" height="3.6" rx="0.5" fill="#3E78FF" />
+    <rect x="7.5" y="7.2" width="9" height="0.9" rx="0.45" fill="rgba(255,255,255,0.35)" />
+  </Svg>
+)
+
+const ToothBlueSquare: IconCmp = ({ size }) => (
+  <Svg size={size}>
+    <rect x="4.5" y="4.5" width="15" height="15" fill="#74B7DD" />
+  </Svg>
+)
+
+const ToothBridgeX6: IconCmp = ({ size }) => (
+  <Svg size={size}>
+    <path
+      d="M2 12 C2 7.6 4.9 3.3 8.8 3.3 C10.3 3.3 11.3 4 12 4.8 C12.7 4 13.7 3.3 15.2 3.3 C19.1 3.3 22 7.6 22 12 L19.9 15.6 L17.5 13.8 H6.5 L4.1 15.6 Z"
+      fill="#1FA8E5"
+    />
+    <path
+      d="M5.7 11.6 C5.7 9 7.6 7 10 7 C10.9 7 11.5 7.3 12 7.8 C12.5 7.3 13.1 7 14 7 C16.4 7 18.3 9 18.3 11.6 L16.8 14 H7.2 Z"
+      fill="#24E035"
+    />
+    <rect x="2.2" y="15.8" width="19.6" height="4.4" rx="0.6" fill="#EAB6BE" />
+    <text x="12" y="15.8" textAnchor="middle" dominantBaseline="middle" fill="#FFFFFF" fontSize="10.5" fontWeight="900">
+      x6
+    </text>
+  </Svg>
+)
+
+const ToothBridgeX7: IconCmp = ({ size }) => (
+  <Svg size={size}>
+    <path
+      d="M2 12 C2 7.6 4.9 3.3 8.8 3.3 C10.3 3.3 11.3 4 12 4.8 C12.7 4 13.7 3.3 15.2 3.3 C19.1 3.3 22 7.6 22 12 L19.9 15.6 L17.5 13.8 H6.5 L4.1 15.6 Z"
+      fill="#1FA8E5"
+    />
+    <path
+      d="M5.7 11.6 C5.7 9 7.6 7 10 7 C10.9 7 11.5 7.3 12 7.8 C12.5 7.3 13.1 7 14 7 C16.4 7 18.3 9 18.3 11.6 L16.8 14 H7.2 Z"
+      fill="#24E035"
+    />
+    <rect x="2.2" y="15.8" width="19.6" height="4.4" rx="0.6" fill="#EAB6BE" />
+    <text x="12" y="15.8" textAnchor="middle" dominantBaseline="middle" fill="#FFFFFF" fontSize="10.5" fontWeight="900">
+      x7
+    </text>
   </Svg>
 )
 
@@ -120,9 +169,12 @@ export const ICONS: Record<string, IconCmp> = {
   'tooth-root-canal': ToothRootCanal,
   'tooth-veneer': ToothVeneer,
   'tooth-blue-block': ToothBlueBlock,
+  'tooth-blue-square': ToothBlueSquare,
   'tooth-blue-cap': ToothBlueCap,
   'tooth-purple-cap': ToothPurpleCap,
   'tooth-blue-green-cap': ToothBlueGreenCap,
+  'tooth-bridge-x6': ToothBridgeX6,
+  'tooth-bridge-x7': ToothBridgeX7,
 
   // Legacy mappings for rest of app
   'tooth-healthy': ToothPin,
@@ -162,9 +214,12 @@ export const ICON_OPTIONS = [
   'tooth-root-canal',
   'tooth-veneer',
   'tooth-blue-block',
+  'tooth-blue-square',
   'tooth-blue-cap',
   'tooth-purple-cap',
   'tooth-blue-green-cap',
+  'tooth-bridge-x6',
+  'tooth-bridge-x7',
 ]
 
 export const ICON_LABELS: Record<string, string> = {
@@ -176,10 +231,13 @@ export const ICON_LABELS: Record<string, string> = {
   'tooth-extraction': 'Удаление',
   'tooth-root-canal': 'Канал',
   'tooth-veneer': 'Наращивание кости',
-  'tooth-blue-block': 'Формирователь десны',
+  'tooth-blue-block': 'Брекеты',
+  'tooth-blue-square': 'Формирователь десы',
   'tooth-blue-cap': 'Коронка',
   'tooth-purple-cap': 'Коронка',
   'tooth-blue-green-cap': 'Винир',
+  'tooth-bridge-x6': 'Винир x6',
+  'tooth-bridge-x7': 'Винир x7',
 }
 
 export function Icon({ name, size = 18 }: { name: string; size?: number }) {
@@ -197,3 +255,6 @@ export function Icon({ name, size = 18 }: { name: string; size?: number }) {
     </div>
   )
 }
+
+
+

@@ -703,10 +703,11 @@ textarea:focus-visible {
 /* --- Service row in Step 2 (icon, name, add button) --- */
 .service-row-inner {
   display: grid;
-  grid-template-columns: 42px 1fr auto;
+  grid-template-columns: 46px minmax(0, 1fr) auto;
   gap: 10px;
   align-items: center;
   padding: 10px;
+  min-height: 64px;
   border: 1px solid var(--border);
   border-radius: 14px;
   background: linear-gradient(
@@ -722,9 +723,10 @@ textarea:focus-visible {
 }
 @media (max-width: 413px) {
   .service-row-inner {
-    grid-template-columns: 36px 1fr auto;
+    grid-template-columns: 40px minmax(0, 1fr) auto;
     gap: 8px;
     padding: 8px;
+    min-height: 56px;
   }
 }
 
