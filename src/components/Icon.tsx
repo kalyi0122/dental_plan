@@ -1,4 +1,4 @@
-import { Camera, Ruler, Scan, Stethoscope } from 'lucide-react'
+﻿import { Camera, Ruler, Scan, Stethoscope } from 'lucide-react'
 
 type IconProps = { size?: number }
 type IconCmp = React.ComponentType<IconProps>
@@ -221,7 +221,7 @@ export const ICON_LABELS: Record<string, string> = {
   implant: 'Имплант',
   'tooth-healthy': 'Вкладка',
   'tooth-cavity': 'Синус лифтинг',
-  'tooth-deep-caries': 'Наращивание кости',
+  'tooth-deep-caries': 'Наращивание кости', 
   'tooth-filling': 'Пломба',
   'tooth-crown': 'Зеленный коронка',
   'tooth-veneer': 'Винир',
