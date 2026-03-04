@@ -2,7 +2,14 @@ import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import type { Patient, Service, Settings, TreatmentPlan } from '../domain/types'
 import { formatMoney } from '../domain/money'
-import { FDI_TEETH, sortTeethFdi, toDisplayToothLabel } from '../domain/teeth'
+import {
+  sortTeethFdi,
+  mapPlanToToothConditions,
+  buildDentalChartSvg,
+} from '../domain/teeth'
+import type { ToothCondition } from '../domain/teeth'
+
+// Убедись, что этот файл существует в папке src/assets/
 
 export async function generateQuotePdf({
   patient,
@@ -22,13 +29,12 @@ export async function generateQuotePdf({
   const serviceById = new Map(services.map((s) => [s.id, s]))
 
   const greeting = substitute(settings.quoteText.greeting, patient)
-  const terms = substitute(settings.quoteText.terms, patient)
-  const footer = substitute(settings.quoteText.footer, patient)
 
   // Header
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(18)
   doc.text('Treatment Estimate', margin, 54)
+  
   doc.setFont('helvetica', 'normal')
   doc.setFontSize(11)
   doc.setTextColor(90)
@@ -38,6 +44,7 @@ export async function generateQuotePdf({
   doc.setTextColor(0)
   doc.setFont('helvetica', 'bold')
   doc.text('Patient', pageW - margin - 180, 54)
+  
   doc.setFont('helvetica', 'normal')
   const pLines = [
     patient.fullName,
@@ -50,26 +57,30 @@ export async function generateQuotePdf({
   const startY = 116
   doc.setDrawColor(200)
   doc.setFillColor(250, 250, 250)
-  doc.roundedRect(margin, startY, pageW - margin * 2, 66, 10, 10, 'S')
-  doc.setFontSize(11)
-  doc.text(doc.splitTextToSize(greeting, pageW - margin * 2 - 18), margin + 10, startY + 22)
+  doc.roundedRect(margin, startY, pageW - margin * 2, 60, 10, 10, 'S')
+  doc.setFontSize(10)
+  const splitGreeting = doc.splitTextToSize(greeting, pageW - margin * 2 - 20)
+  doc.text(splitGreeting, margin + 10, startY + 20)
 
-  // Dental chart (affected teeth)
-  const affected = collectAffectedTeeth(plan)
-  const chartY = startY + 86
+  // Dental chart
+  const toothConditions = mapPlanToToothConditions(plan, serviceById)
+  const chartY = startY + 80
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(12)
-  doc.text('Affected teeth', margin, chartY)
-  drawChart(doc, margin, chartY + 12, affected, settings.numberingSystem)
+  doc.text('Dental Chart', margin, chartY)
+
+  const chartWidth = pageW - margin * 2
+  const chartHeight = Math.round((chartWidth * 220) / 480) // preserve dental chart aspect ratio
+  await drawChartAsync(doc, margin, chartY + 10, chartWidth, chartHeight, toothConditions, settings.numberingSystem)
 
   // Table
-  const tableY = chartY + 120
-  const { rows, totalCents } = buildRows(plan, serviceById, settings.numberingSystem)
+  const tableY = chartY + 10 + chartHeight + 16
+  const { rows, totalCents } = buildRows(plan, serviceById)
 
   autoTable(doc, {
     startY: tableY,
     margin: { left: margin, right: margin },
-    head: [['Stage', 'Service', 'Scope', 'Qty', 'Unit', 'Line total']],
+    head: [['Stage', 'Service', 'Scope', 'Qty', 'Unit', 'Total']],
     body: rows.map((r) => [
       r.stage,
       r.service,
@@ -78,152 +89,91 @@ export async function generateQuotePdf({
       formatMoney(r.unitCents, settings.currency),
       formatMoney(r.lineTotalCents, settings.currency),
     ]),
-    styles: {
-      font: 'helvetica',
-      fontSize: 10,
-      cellPadding: 6,
-    },
+    styles: { font: 'helvetica', fontSize: 9 },
     headStyles: { fillColor: [47, 111, 235] },
-    columnStyles: {
-      3: { halign: 'right' },
-      4: { halign: 'right' },
-      5: { halign: 'right' },
-    },
-    didDrawPage: () => {
-      // no-op
-    },
   })
 
-  const afterTable = (doc as any).lastAutoTable?.finalY ? (doc as any).lastAutoTable.finalY + 14 : tableY + 180
-
-  doc.setFont('helvetica', 'bold')
+  const finalY = (doc as any).lastAutoTable?.finalY || tableY + 100
   doc.setFontSize(12)
-  doc.text(`Total: ${formatMoney(totalCents, settings.currency)}`, pageW - margin, afterTable, { align: 'right' })
-
-  // Terms + footer blocks
-  const blockY = afterTable + 18
   doc.setFont('helvetica', 'bold')
-  doc.setFontSize(11)
-  doc.text('Terms & conditions', margin, blockY)
-  doc.setFont('helvetica', 'normal')
-  doc.setFontSize(10)
-  doc.setTextColor(60)
-  doc.text(doc.splitTextToSize(terms, pageW - margin * 2), margin, blockY + 16)
+  doc.text(`Total: ${formatMoney(totalCents, settings.currency)}`, pageW - margin, finalY + 20, { align: 'right' })
 
-  const footerY = blockY + 16 + doc.getTextDimensions(doc.splitTextToSize(terms, pageW - margin * 2)).h + 14
-  doc.setTextColor(0)
-  doc.setFont('helvetica', 'bold')
-  doc.text('Footer', margin, footerY)
-  doc.setFont('helvetica', 'normal')
-  doc.setTextColor(60)
-  doc.text(doc.splitTextToSize(footer, pageW - margin * 2), margin, footerY + 16)
-
-  const safeName = patient.fullName.replace(/[^\w\s-]/g, '').trim().replace(/\s+/g, '_')
-  doc.save(`Estimate_${safeName || 'Patient'}.pdf`)
+  // Сохранение
+  const safeName = patient.fullName.replace(/[^\w\s-]/g, '').replace(/\s+/g, '_')
+  doc.save(`Estimate_${safeName}.pdf`)
 }
+
+// --- ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ (ИСПРАВЛЕНЫ И ЗАКРЫТЫ) ---
 
 function substitute(text: string, patient: Patient) {
-  return text.replaceAll('{patientName}', patient.fullName).replaceAll('{patient_name}', patient.fullName)
+  return text
+    .replaceAll('{patientName}', patient.fullName)
+    .replaceAll('{patient_name}', patient.fullName)
 }
 
-function collectAffectedTeeth(plan: TreatmentPlan) {
-  const ids: string[] = []
-  plan.procedures.forEach((p) => {
-    if (p.scope === 'TOOTH' && p.toothIds?.length) ids.push(...p.toothIds)
+async function svgToPngDataUrl(svgString: string, width: number, height: number): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const blob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const img = new Image()
+    img.onload = () => {
+      const canvas = document.createElement('canvas')
+      canvas.width = width * 2
+      canvas.height = height * 2
+      const ctx = canvas.getContext('2d')
+      if (ctx) {
+        ctx.scale(2, 2)
+        ctx.drawImage(img, 0, 0, width, height)
+      }
+      URL.revokeObjectURL(url)
+      resolve(canvas.toDataURL('image/png'))
+    }
+    img.onerror = () => {
+      URL.revokeObjectURL(url)
+      reject(new Error('SVG render failed'))
+    }
+    img.src = url
   })
-  return Array.from(new Set(ids))
 }
 
-function drawChart(
+async function drawChartAsync(
   doc: jsPDF,
   x: number,
   y: number,
-  affectedTeethFdi: string[],
-  numberingSystem: Settings['numberingSystem'],
+  width: number,
+  height: number,
+  toothConditions: Map<string, ToothCondition>,
+  numberingSystem: string,
 ) {
-  const affected = new Set(affectedTeethFdi)
-  const cellW = 28
-  const cellH = 22
-  const gap = 4
-  const upper = FDI_TEETH.slice(0, 16)
-  const lower = FDI_TEETH.slice(16)
-
-  const drawRow = (row: string[], rowY: number) => {
-    row.forEach((t, i) => {
-      const cx = x + i * (cellW + gap)
-      const on = affected.has(t)
-      doc.setDrawColor(200)
-      if (on) {
-        doc.setFillColor(36, 192, 138)
-        doc.roundedRect(cx, rowY, cellW, cellH, 6, 6, 'FD')
-        doc.setTextColor(255)
-      } else {
-        doc.setFillColor(248, 248, 248)
-        doc.roundedRect(cx, rowY, cellW, cellH, 6, 6, 'S')
-        doc.setTextColor(90)
-      }
-      doc.setFontSize(9)
-      doc.text(toDisplayToothLabel(t, numberingSystem), cx + cellW / 2, rowY + 14, { align: 'center' })
-    })
+  const svg = buildDentalChartSvg(toothConditions, numberingSystem)
+  try {
+    const pngData = await svgToPngDataUrl(svg, width, height)
+    doc.addImage(pngData, 'PNG', x, y, width, height)
+  } catch (e) {
+    console.error("SVG chart failed", e)
   }
-
-  drawRow(upper, y)
-  drawRow(lower, y + cellH + 8)
-  doc.setTextColor(0)
-}
+} // <--- Теперь функция закрыта корректно
 
 function buildRows(
   plan: TreatmentPlan,
   serviceById: Map<string, Service>,
-  numberingSystem: Settings['numberingSystem'],
 ) {
-  const stages = plan.stages.slice().sort((a, b) => a.order - b.order)
-  const stageLabelById = new Map(stages.map((s) => [s.id, s.name]))
-
-  const orderKey = (p: any) => {
-    const stageOrder = p.stageId ? stages.find((s) => s.id === p.stageId)?.order ?? 999 : 0
-    const stageName = p.stageId ? stageLabelById.get(p.stageId) ?? '' : 'Unstaged'
-    return `${String(stageOrder).padStart(3, '0')}|${stageName}`
-  }
-
-  const procedures = plan.procedures.slice().sort((a, b) => orderKey(a).localeCompare(orderKey(b)))
-
-  const rows: {
-    stage: string
-    service: string
-    scope: string
-    qty: number
-    unitCents: number
-    lineTotalCents: number
-  }[] = []
-
   let totalCents = 0
-
-  for (const p of procedures) {
+  const rows = plan.procedures.map(p => {
     const svc = serviceById.get(p.serviceId)
-    const stage = p.stageId ? stageLabelById.get(p.stageId) ?? 'Stage' : 'Unstaged'
     const unitCents = svc?.priceCents ?? 0
-    const qty = Math.max(1, p.quantity || 1)
-    const lineTotalCents = unitCents * qty
-    totalCents += lineTotalCents
+    const qty = p.quantity || 1
+    const lineTotal = unitCents * qty
+    totalCents += lineTotal
 
-    const scope =
-      p.scope === 'TOOTH'
-        ? `Teeth ${p.toothIds?.length ? sortTeethFdi(p.toothIds).map((t) => toDisplayToothLabel(t, numberingSystem)).join(', ') : '—'}`
-        : p.scope === 'JAW'
-          ? `Jaw ${p.jaw ?? '—'}`
-          : 'General'
-
-    rows.push({
-      stage,
-      service: svc?.name ?? 'Missing service',
-      scope,
+    return {
+      stage: 'Treatment',
+      service: svc?.name ?? 'Unknown',
+      scope: p.toothIds ? `Teeth: ${sortTeethFdi(p.toothIds).join(', ')}` : 'General',
       qty,
       unitCents,
-      lineTotalCents,
-    })
-  }
-
+      lineTotalCents: lineTotal
+    }
+  })
   return { rows, totalCents }
 }
-

@@ -1,23 +1,24 @@
-import { FDI_TEETH, toDisplayToothLabel } from '../domain/teeth'
+import { FDI_TEETH, toDisplayToothLabel, getToothPaths } from '../domain/teeth'
+import type { ToothCondition } from '../domain/teeth'
 import type { ToothNumberingSystem } from '../domain/types'
 import { useTranslation } from '../i18n/useTranslation'
+import './DentalChart.css'
 
 export function DentalChart({
   selected,
-  affected,
+  conditions = new Map(),
   numberingSystem,
   onToggle,
   onSetSelected,
 }: {
   selected: string[]
-  affected?: string[]
+  conditions?: Map<string, ToothCondition>
   numberingSystem: ToothNumberingSystem
   onToggle: (fdiToothId: string) => void
   onSetSelected?: (next: string[]) => void
 }) {
   const { t } = useTranslation()
   const selectedSet = new Set(selected)
-  const affectedSet = new Set(affected ?? [])
 
   const upper = FDI_TEETH.slice(0, 16)
   const lower = FDI_TEETH.slice(16)
@@ -31,80 +32,124 @@ export function DentalChart({
         </div>
       </div>
 
-      <div className="dental-chart-arch">
-        {upper.map((fdiId) => (
-          <ToothButton
-            key={fdiId}
-            fdi={fdiId}
-            label={toDisplayToothLabel(fdiId, numberingSystem)}
-            title={t('chart.toothTitle', { label: toDisplayToothLabel(fdiId, numberingSystem), fdi: fdiId })}
-            selected={selectedSet.has(fdiId)}
-            affected={affectedSet.has(fdiId)}
-            onToggle={onToggle}
-            onSetSelected={onSetSelected}
-            allTeeth={upper}
-            selectedSet={selectedSet}
-          />
-        ))}
-      </div>
-      <div style={styles.separator} />
-      <div className="dental-chart-arch">
-        {lower.map((fdiId) => (
-          <ToothButton
-            key={fdiId}
-            fdi={fdiId}
-            label={toDisplayToothLabel(fdiId, numberingSystem)}
-            title={t('chart.toothTitle', { label: toDisplayToothLabel(fdiId, numberingSystem), fdi: fdiId })}
-            selected={selectedSet.has(fdiId)}
-            affected={affectedSet.has(fdiId)}
-            onToggle={onToggle}
-            onSetSelected={onSetSelected}
-            allTeeth={lower}
-            selectedSet={selectedSet}
-          />
-        ))}
+      <div style={styles.chartArea}>
+        {/* Upper Arch */}
+        <div style={styles.archRow}>
+          {upper.map((fdiId) => (
+            <ToothNode
+              key={fdiId}
+              fdi={fdiId}
+              label={toDisplayToothLabel(fdiId, numberingSystem)}
+              selected={selectedSet.has(fdiId)}
+              condition={conditions.get(fdiId)}
+              allTeeth={upper}
+              selectedSet={selectedSet}
+              onToggle={onToggle}
+              onSetSelected={onSetSelected}
+            />
+          ))}
+        </div>
+
+        <div style={styles.archDivider} />
+
+        {/* Lower Arch */}
+        <div style={styles.archRow}>
+          {lower.map((fdiId) => (
+            <ToothNode
+              key={fdiId}
+              fdi={fdiId}
+              label={toDisplayToothLabel(fdiId, numberingSystem)}
+              selected={selectedSet.has(fdiId)}
+              condition={conditions.get(fdiId)}
+              allTeeth={lower}
+              selectedSet={selectedSet}
+              onToggle={onToggle}
+              onSetSelected={onSetSelected}
+            />
+          ))}
+        </div>
       </div>
 
       <div style={styles.legend}>
-        <span style={{ ...styles.legendSwatch, background: 'color-mix(in oklab, var(--primary) 40%, transparent)' }} />
+        <span style={{ ...styles.legendSwatch, background: '#2563EB' }} />
         <span className="muted">{t('chart.selected')}</span>
         <span style={{ width: 12 }} />
-        <span style={{ ...styles.legendSwatch, background: 'color-mix(in oklab, var(--success) 35%, transparent)' }} />
-        <span className="muted">{t('chart.inPlan')}</span>
+        <span style={{ ...styles.legendSwatch, background: '#FDE047' }} />
+        <span className="muted">Crown</span>
+        <span style={{ width: 12 }} />
+        <span style={{ ...styles.legendSwatch, background: '#38A169' }} />
+        <span className="muted">Filling</span>
+        <span style={{ width: 12 }} />
+        <span style={{ ...styles.legendSwatch, background: '#1F2937' }} />
+        <span className="muted">Extracted</span>
       </div>
     </div>
   )
 }
 
-function ToothButton({
+function ToothNode({
   fdi,
   label,
-  title,
   selected,
-  affected,
-  onToggle,
-  onSetSelected,
+  condition,
   allTeeth,
   selectedSet,
+  onToggle,
+  onSetSelected,
 }: {
   fdi: string
   label: string
-  title: string
   selected: boolean
-  affected: boolean
-  onToggle: (fdiToothId: string) => void
-  onSetSelected?: (next: string[]) => void
+  condition?: ToothCondition
   allTeeth: string[]
   selectedSet: Set<string>
+  onToggle: (fdiToothId: string) => void
+  onSetSelected?: (next: string[]) => void
 }) {
+  const { root, crown } = getToothPaths(fdi)
+  const isUp = fdi.startsWith('1') || fdi.startsWith('2')
+  const visualIcon = condition?.visualIcon
+
+  // derive a single state class for the tooth (used by CSS file)
+  let stateClass = ''
+  if (condition?.hasExtraction) stateClass = 'state-extracted'
+
+  // base colors (selection highlight); CSS classes will override when a procedure is present
+  let rootColor = selected ? 'rgba(56, 182, 255, 0.25)' : '#FFF0E6'
+  let rootStroke = '#D1D5DB'
+  let crownColor = selected ? 'rgba(56, 182, 255, 0.4)' : '#FFFFFF'
+  let crownStroke = '#9CA3AF'
+
+  if (visualIcon === 'tooth-blue-cap') {
+    crownColor = '#1FA8E5'
+    crownStroke = '#1579A7'
+  } else if (visualIcon === 'tooth-purple-cap') {
+    crownColor = '#A447EF'
+    crownStroke = '#7E2FC4'
+  } else if (visualIcon === 'tooth-blue-green-cap') {
+    crownColor = '#1FA8E5'
+    crownStroke = '#1579A7'
+  } else if (visualIcon === 'tooth-inlay') {
+    crownColor = '#F9CE1D'
+    crownStroke = '#D6A700'
+  } else if (visualIcon === 'tooth-filling') {
+    crownColor = '#24E035'
+    crownStroke = '#1CAA2A'
+  } else if (visualIcon === 'tooth-crown') {
+    crownColor = '#38A169'
+    crownStroke = '#25603B'
+  } else if (visualIcon === 'implant') {
+    crownColor = '#00B4D8'
+    crownStroke = '#02839E'
+  }
+
   return (
-    <button
-      type="button"
+    <div
+      className={stateClass}
+      style={{ ...styles.nodeWrap, cursor: 'pointer' }}
       onClick={(e) => {
         if (e.shiftKey && onSetSelected) {
-          const indices = allTeeth
-            .map((t, i) => (selectedSet.has(t) ? i : -1))
-            .filter((i) => i >= 0)
+          const indices = allTeeth.map((t, i) => (selectedSet.has(t) ? i : -1)).filter((i) => i >= 0)
           const anchor = indices.length ? indices[indices.length - 1]! : allTeeth.indexOf(fdi)
           const end = allTeeth.indexOf(fdi)
           const lo = Math.min(anchor, end)
@@ -114,18 +159,81 @@ function ToothButton({
         }
         onToggle(fdi)
       }}
-      style={{
-        ...styles.tooth,
-        ...(selected ? styles.toothSelected : null),
-        ...(affected ? styles.toothAffected : null),
-      }}
-      title={title}
     >
-      <div style={{ fontSize: 12, fontWeight: 750 }}>{label}</div>
-      <div style={{ fontSize: 11 }} className="muted">
-        {fdi}
-      </div>
-    </button>
+      {!isUp && <div style={{ ...styles.nodeLabel, color: selected ? '#58A6FF' : 'var(--muted)', opacity: 0.6 }}>{label}</div>}
+
+      <svg width="25" height="75" viewBox="-24 -65 48 130" style={{
+        filter: selected ? 'drop-shadow(0px 0px 4px rgba(56, 182, 255, 0.8))' : 'none',
+        transition: 'all 0.2s',
+      }}>
+        {/* Draw Root */}
+        <path
+          className="tooth-root"
+          d={root}
+          fill={rootColor}
+          stroke={rootStroke}
+          strokeWidth="2.5"
+          strokeLinejoin="round"
+        />
+
+        {/* Draw Root Canal annotation if present */}
+        {condition?.hasRootCanal && !condition?.hasExtraction && (
+          <path
+            d={isUp ? "M0,-40 L0,5" : "M0,40 L0,-5"}
+            stroke="#A855F7" /* Purple line */
+            strokeWidth="3.5"
+            strokeLinecap="round"
+          />
+        )}
+        {visualIcon === 'tooth-pin' && !condition?.hasExtraction && (
+          <rect x="-1.6" y={isUp ? -22 : -2} width="3.2" height="24" rx="1.6" fill="#55D6FF" />
+        )}
+
+        {/* extraction cross */}
+        {condition?.hasExtraction && (
+          <g className="tooth-cross" stroke="#E53E3E" strokeWidth="4" strokeLinecap="round">
+            <line x1="-15" y1="-15" x2="15" y2="15" />
+            <line x1="-15" y1="15" x2="15" y2="-15" />
+          </g>
+        )}
+
+        {/* Draw Crown */}
+        <path
+          className="tooth-crown"
+          d={crown}
+          fill={crownColor}
+          stroke={crownStroke}
+          strokeWidth="2.5"
+          strokeLinejoin="round"
+        />
+        {visualIcon === 'tooth-blue-block' && !condition?.hasExtraction && (
+          <rect x="-6.5" y={isUp ? 5.5 : -12.5} width="13" height="13" fill="#72B6DF" />
+        )}
+        {visualIcon === 'tooth-veneer' && !condition?.hasExtraction && (
+          <rect x="-9" y={isUp ? 8.5 : -14.5} width="18" height="5.5" rx="1.2" fill="#24E035" />
+        )}
+        {visualIcon === 'tooth-blue-green-cap' && !condition?.hasExtraction && (
+          <path
+            d={isUp ? "M-7,12 Q0,18 7,12 Q0,26 -7,12" : "M-7,-12 Q0,-18 7,-12 Q0,-26 -7,-12"}
+            fill="#34E33C"
+            stroke="#24C92D"
+            strokeWidth="1.4"
+          />
+        )}
+
+        {/* Draw Filling annotation if present */}
+        {condition?.hasFilling && !condition?.hasCrown && !condition?.hasExtraction && !visualIcon && (
+          <path
+            d={isUp ? "M-7,12 Q0,18 7,12 Q0,26 -7,12" : "M-7,-12 Q0,-18 7,-12 Q0,-26 -7,-12"}
+            fill="#60A5FA" /* Blue filling */
+            stroke="#3B82F6"
+            strokeWidth="1.5"
+          />
+        )}
+      </svg>
+
+      {isUp && <div style={{ ...styles.nodeLabel, color: selected ? '#58A6FF' : 'var(--muted)', opacity: 0.6 }}>{label}</div>}
+    </div>
   )
 }
 
@@ -136,35 +244,46 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: 'baseline',
     justifyContent: 'space-between',
     gap: 12,
-    marginBottom: 10,
+    marginBottom: 8,
   },
-  separator: {
-    height: 1,
-    background: 'var(--border)',
-    margin: '10px 0',
-  },
-  tooth: {
-    borderRadius: 14,
+  chartArea: {
+    padding: '24px 12px',
+    background: '#1D1F23',
     border: '1px solid var(--border)',
-    background: 'color-mix(in oklab, var(--panel) 85%, transparent)',
-    padding: '10px 6px',
-    cursor: 'pointer',
-    textAlign: 'center',
-    transition: 'all 120ms ease',
+    borderRadius: 16,
+    overflowX: 'auto',
   },
-  toothSelected: {
-    border: '1px solid color-mix(in oklab, var(--primary) 55%, var(--border))',
-    background: 'color-mix(in oklab, var(--primary) 16%, var(--panel))',
+  archRow: {
+    display: 'flex',
+    justifyContent: 'center',
+    gap: 6,
+    minWidth: 'max-content',
   },
-  toothAffected: {
-    boxShadow: 'inset 0 0 0 1px color-mix(in oklab, var(--success) 55%, transparent)',
+  archDivider: {
+    height: 1,
+    background: '#2d3036',
+    margin: '16px auto',
+    width: '90%',
+  },
+  nodeWrap: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: 6,
+    padding: '4px',
+    borderRadius: 8,
+  },
+  nodeLabel: {
+    fontSize: 14,
+    fontWeight: 600,
   },
   legend: {
     display: 'flex',
     alignItems: 'center',
     gap: 8,
-    marginTop: 10,
+    marginTop: 12,
     fontSize: 12,
+    flexWrap: 'wrap',
   },
   legendSwatch: {
     width: 12,
@@ -173,4 +292,3 @@ const styles: Record<string, React.CSSProperties> = {
     border: '1px solid var(--border)',
   },
 }
-

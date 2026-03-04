@@ -6,7 +6,7 @@ import { useAppStore } from '../store/useAppStore'
 import { useTranslation } from '../i18n/useTranslation'
 import { DentalChart } from './DentalChart'
 import { formatMoney } from '../domain/money'
-import { sortTeethFdi, toDisplayToothLabel } from '../domain/teeth'
+import { sortTeethFdi, toDisplayToothLabel, mapPlanToToothConditions } from '../domain/teeth'
 import { Button, Card, Divider, Input, Pill, Select } from './ui'
 import { Icon } from './Icon'
 
@@ -30,13 +30,8 @@ export function TreatmentPlanner({ plan }: { plan: TreatmentPlan }) {
 
   const serviceById = useMemo(() => new Map(services.map((s) => [s.id, s])), [services])
 
-  const affectedTeeth = useMemo(() => {
-    const ids: string[] = []
-    plan.procedures.forEach((p) => {
-      if (p.scope === 'TOOTH' && p.toothIds?.length) ids.push(...p.toothIds)
-    })
-    return Array.from(new Set(ids))
-  }, [plan.procedures])
+  // re‑use the same logic that the PDF generator uses; keeps the UI and PDF in sync
+  const toothConditions = useMemo(() => mapPlanToToothConditions(plan, serviceById), [plan, serviceById])
 
   const filteredServices = useMemo(() => {
     const q = serviceQuery.trim().toLowerCase()
@@ -50,8 +45,9 @@ export function TreatmentPlanner({ plan }: { plan: TreatmentPlan }) {
 
   const proceduresByStage = useMemo(() => {
     const map = new Map<string, PlanProcedure[]>()
+    const stageIdSet = new Set(stages.map((s) => s.id))
     plan.procedures.forEach((p) => {
-      const key = p.stageId ?? '__unstaged__'
+      const key = p.stageId && stageIdSet.has(p.stageId) ? p.stageId : '__unstaged__'
       if (!map.has(key)) map.set(key, [])
       map.get(key)!.push(p)
     })
@@ -96,7 +92,7 @@ export function TreatmentPlanner({ plan }: { plan: TreatmentPlan }) {
       >
         <DentalChart
           selected={selectedTeeth}
-          affected={affectedTeeth}
+          conditions={toothConditions}
           numberingSystem={settings.numberingSystem}
           onToggle={(t) => {
             setSelectedTeeth((cur) => (cur.includes(t) ? cur.filter((x) => x !== t) : [...cur, t]))
@@ -149,13 +145,13 @@ export function TreatmentPlanner({ plan }: { plan: TreatmentPlan }) {
                 <div style={styles.serviceIcon}>
                   <Icon name={s.icon} size={24} />
                 </div>
-                <div style={{ minWidth: 0 }}>
-                  <div style={{ fontWeight: 650 }}>{s.name}</div>
-                  <div className="muted" style={{ fontSize: 13 }}>
+                <div style={{ minWidth: 0, overflow: 'hidden' }}>
+                  <div style={{ fontWeight: 650, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.name}</div>
+                  <div className="muted" style={{ fontSize: 13, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     {formatMoney(s.priceCents, settings.currency)}
                   </div>
                   {s.category === 'JAW' && s.jawRegion ? (
-                    <div className="muted" style={{ fontSize: 12 }}>
+                    <div className="muted" style={{ fontSize: 12, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                       {t('planner.jaw')}: {jawLabel(s.jawRegion)}
                     </div>
                   ) : null}
@@ -172,12 +168,12 @@ export function TreatmentPlanner({ plan }: { plan: TreatmentPlan }) {
                       const proc: PlanProcedure =
                         scope === 'TOOTH'
                           ? {
-                              id: nanoid(),
-                              serviceId: s.id,
-                              scope: 'TOOTH',
-                              toothIds: sortTeethFdi(selectedTeeth),
-                              quantity: sortTeethFdi(selectedTeeth).length || 1,
-                            }
+                            id: nanoid(),
+                            serviceId: s.id,
+                            scope: 'TOOTH',
+                            toothIds: sortTeethFdi(selectedTeeth),
+                            quantity: sortTeethFdi(selectedTeeth).length || 1,
+                          }
                           : scope === 'JAW'
                             ? { id: nanoid(), serviceId: s.id, scope: 'JAW', jaw: s.jawRegion ?? jaw, quantity: 1 }
                             : { id: nanoid(), serviceId: s.id, scope: 'GENERAL', quantity: 1 }
@@ -213,8 +209,7 @@ export function TreatmentPlanner({ plan }: { plan: TreatmentPlan }) {
             <Button
               variant="primary"
               onClick={() => {
-                const name = newStageName.trim()
-                if (!name) return
+                const name = newStageName.trim() || `Этап ${stages.length + 1}`
                 updatePlan(plan.id, (draft) => {
                   const maxOrder = draft.stages.reduce((m, s) => Math.max(m, s.order), 0)
                   draft.stages.push({ id: nanoid(), name, order: maxOrder + 1 })
@@ -233,6 +228,7 @@ export function TreatmentPlanner({ plan }: { plan: TreatmentPlan }) {
             procedures={proceduresByStage.get('__unstaged__') ?? []}
             currency={settings.currency}
             planId={plan.id}
+            stageId={undefined}
             stageOptions={stageOptions}
             serviceById={serviceById}
           />
@@ -244,6 +240,7 @@ export function TreatmentPlanner({ plan }: { plan: TreatmentPlan }) {
               procedures={proceduresByStage.get(st.id) ?? []}
               currency={settings.currency}
               planId={plan.id}
+              stageId={st.id}
               stageOptions={stageOptions}
               serviceById={serviceById}
             />
@@ -264,6 +261,7 @@ function StageBlock({
   procedures,
   currency,
   planId,
+  stageId,
   stageOptions,
   serviceById,
 }: {
@@ -271,6 +269,7 @@ function StageBlock({
   procedures: PlanProcedure[]
   currency: string
   planId: string
+  stageId?: string
   stageOptions: { value: string; label: string }[]
   serviceById: Map<string, { name: string; priceCents: number; icon: string }>
 }) {
@@ -288,7 +287,24 @@ function StageBlock({
     <div style={styles.stageBlock}>
       <div style={styles.stageHeader}>
         <div style={{ fontWeight: 750 }}>{title}</div>
-        <Pill>{formatMoney(subtotal, currency as any)}</Pill>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <Pill>{formatMoney(subtotal, currency as any)}</Pill>
+          {stageId ? (
+            <Button
+              title="Удалить этап"
+              onClick={() => {
+                updatePlan(planId, (draft) => {
+                  draft.stages = draft.stages.filter((s) => s.id !== stageId)
+                  draft.procedures.forEach((p) => {
+                    if (p.stageId === stageId) p.stageId = undefined
+                  })
+                })
+              }}
+            >
+              <Trash2 size={14} />
+            </Button>
+          ) : null}
+        </div>
       </div>
       <div style={{ display: 'grid', gap: 8 }}>
         {procedures.map((p) => {
@@ -296,9 +312,9 @@ function StageBlock({
           return (
             <div key={p.id} className="proc-row">
               <div className="proc-row-icon" style={styles.procIcon}>{svc ? <Icon name={svc.icon} size={22} /> : '?'}</div>
-              <div className="proc-row-main" style={{ minWidth: 0 }}>
-                <div className="proc-row-title-row">
-                  <span className="proc-row-name">{svc?.name ?? t('planner.missingService')}</span>
+              <div className="proc-row-main" style={{ minWidth: 0, overflow: 'hidden' }}>
+                <div className="proc-row-title-row" style={{ flexWrap: 'nowrap' }}>
+                  <span className="proc-row-name" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{svc?.name ?? t('planner.missingService')}</span>
                   <Pill>
                     {p.scope === 'TOOTH'
                       ? `${(p.toothIds?.length ?? 0) || 0} ${t('planner.tooth')}`
@@ -308,7 +324,7 @@ function StageBlock({
                   </Pill>
                 </div>
                 {p.scope === 'TOOTH' && p.toothIds?.length ? (
-                  <div className="muted proc-row-teeth">
+                  <div className="muted proc-row-teeth" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     {t('planner.teethLabel')}{' '}
                     {sortTeethFdi(p.toothIds)
                       .map((t) => toDisplayToothLabel(t, numberingSystem))

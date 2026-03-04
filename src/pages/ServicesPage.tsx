@@ -23,7 +23,7 @@ export function ServicesPage() {
   const [q, setQ] = useState('')
   const [category, setCategory] = useState<ServiceCategory>('TOOTH')
   const [name, setName] = useState('')
-  const [icon, setIcon] = useState('tooth-healthy')
+  const [icon, setIcon] = useState('tooth-pin')
   const [jawRegion, setJawRegion] = useState<JawRegion>('MAXILLA')
   const [iconMenuOpen, setIconMenuOpen] = useState(false)
   const [price, setPrice] = useState('120')
@@ -93,10 +93,10 @@ export function ServicesPage() {
               <div style={{ display: 'grid', gap: 'var(--space-2)' }}>
                 {grouped[cat.value].map((s) => (
                   <div key={s.id} className="row-service">
-                    <div style={styles.iconWrap} aria-hidden>
+                    <div className="row-icon" style={styles.iconWrap} aria-hidden>
                       <Icon name={s.icon} size={24} />
                     </div>
-                    <div style={{ minWidth: 0 }}>
+                    <div className="row-main" style={{ minWidth: 0 }}>
                       <div style={{ fontWeight: 650 }}>{s.name}</div>
                       <div className="muted" style={{ fontSize: 13 }}>
                         {formatMoney(s.priceCents, currency)}

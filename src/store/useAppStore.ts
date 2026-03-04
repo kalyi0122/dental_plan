@@ -124,10 +124,7 @@ function seedPlans(patients: Patient[]): TreatmentPlan[] {
       title: 'Initial treatment plan',
       createdAt: now,
       updatedAt: now,
-      stages: [
-        { id: nanoid(), name: 'Stage 1: Prep', order: 1 },
-        { id: nanoid(), name: 'Stage 2: Surgery', order: 2 },
-      ],
+      stages: [],
       procedures: [],
     },
   ]
@@ -218,7 +215,7 @@ export const useAppStore = create<AppState>()(
               title: 'New treatment plan',
               createdAt: now,
               updatedAt: now,
-              stages: [{ id: nanoid(), name: 'Stage 1', order: 1 }],
+              stages: [],
               procedures: [],
             })
           }),

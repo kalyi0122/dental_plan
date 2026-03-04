@@ -1,6 +1,6 @@
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
-import { Users, Wrench, Settings as SettingsIcon } from 'lucide-react'
+import { Menu, Users, Wrench, X, Settings as SettingsIcon } from 'lucide-react'
 import { useAppStore } from '../store/useAppStore'
 import { useTranslation } from '../i18n/useTranslation'
 import { LanguageSwitcher } from './LanguageSwitcher'
@@ -20,6 +20,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const theme = useAppStore((s) => s.settings.theme)
   const location = useLocation()
   const { t } = useTranslation()
+  const [isMobileNavOpen, setIsMobileNavOpen] = useState(false)
 
   const resolved = useMemo(() => resolveTheme(theme), [theme])
 
@@ -37,9 +38,41 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     return () => mql.removeEventListener?.('change', onChange)
   }, [theme])
 
+  useEffect(() => {
+    setIsMobileNavOpen(false)
+  }, [location.pathname])
+
+  useEffect(() => {
+    if (!isMobileNavOpen) return
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setIsMobileNavOpen(false)
+    }
+    document.body.classList.add('mobile-nav-open')
+    window.addEventListener('keydown', onKeyDown)
+    return () => {
+      document.body.classList.remove('mobile-nav-open')
+      window.removeEventListener('keydown', onKeyDown)
+    }
+  }, [isMobileNavOpen])
+
+  useEffect(() => {
+    const mql = window.matchMedia?.('(min-width: 1024px)')
+    if (!mql) return
+    const onChange = () => {
+      if (mql.matches) setIsMobileNavOpen(false)
+    }
+    mql.addEventListener?.('change', onChange)
+    return () => mql.removeEventListener?.('change', onChange)
+  }, [])
+
   return (
     <div className="app-shell" style={styles.shellBase}>
-      <aside style={styles.sidebar}>
+      <div
+        className={`mobile-nav-backdrop ${isMobileNavOpen ? 'open' : ''}`}
+        aria-hidden={!isMobileNavOpen}
+        onClick={() => setIsMobileNavOpen(false)}
+      />
+      <aside className={`app-sidebar ${isMobileNavOpen ? 'open' : ''}`} style={styles.sidebar}>
         <div style={styles.brand}>
           <div style={styles.logo} aria-hidden />
           <div>
@@ -50,13 +83,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
         </div>
 
-        <nav style={styles.nav}>
+        <nav id="app-navigation" style={styles.nav}>
           {navItems.map((it) => {
             const Icon = it.icon
             return (
               <NavLink
                 key={it.to}
                 to={it.to}
+                onClick={() => setIsMobileNavOpen(false)}
                 style={({ isActive }) => ({
                   ...styles.navItem,
                   ...(isActive ? styles.navItemActive : null),
@@ -75,8 +109,18 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </aside>
 
       <main style={styles.main}>
-        <div style={styles.topbar}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-4)', flex: 1, minWidth: 0 }}>
+        <div className="app-topbar" style={styles.topbar}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', flex: 1, minWidth: 0 }}>
+            <button
+              type="button"
+              className="mobile-menu-btn"
+              onClick={() => setIsMobileNavOpen((v) => !v)}
+              aria-label={isMobileNavOpen ? 'Close menu' : 'Open menu'}
+              aria-expanded={isMobileNavOpen}
+              aria-controls="app-navigation"
+            >
+              {isMobileNavOpen ? <X size={18} /> : <Menu size={18} />}
+            </button>
             <div style={{ fontWeight: 600, fontSize: 15, letterSpacing: '0.01em' }}>
               {location.pathname.startsWith('/patients')
                 ? t('topbar.patients')
@@ -88,7 +132,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               {t('topbar.hint')}
             </div>
           </div>
-          <LanguageSwitcher />
+          <div className="topbar-language">
+            <LanguageSwitcher />
+          </div>
         </div>
         <div style={styles.content}>{children}</div>
       </main>
@@ -101,7 +147,8 @@ const styles: Record<string, React.CSSProperties> = {
     minHeight: 0,
   },
   sidebar: {
-    background: 'var(--panel)',
+    background:
+      'linear-gradient(180deg, color-mix(in oklab, var(--panel) 96%, transparent), color-mix(in oklab, var(--panel2) 90%, var(--panel)))',
     border: '1px solid var(--border)',
     borderRadius: 'var(--radius-lg)',
     boxShadow: 'var(--shadow)',
@@ -116,7 +163,8 @@ const styles: Record<string, React.CSSProperties> = {
     gap: 'var(--space-3)',
     padding: 'var(--space-3)',
     borderRadius: 'var(--radius-md)',
-    background: 'linear-gradient(180deg, color-mix(in oklab, var(--panel2) 92%, transparent), transparent)',
+    background:
+      'linear-gradient(180deg, color-mix(in oklab, var(--panel2) 94%, transparent), color-mix(in oklab, var(--panel2) 68%, transparent))',
     border: '1px solid var(--border)',
     marginBottom: 'var(--space-4)',
   },
@@ -125,8 +173,9 @@ const styles: Record<string, React.CSSProperties> = {
     height: 40,
     borderRadius: 'var(--radius-md)',
     background:
-      'radial-gradient(circle at 30% 30%, rgba(110,168,254,0.9), rgba(110,168,254,0.15) 60%), radial-gradient(circle at 70% 70%, rgba(36,192,138,0.6), transparent 65%)',
+      'radial-gradient(circle at 24% 24%, rgba(96,157,255,0.95), rgba(96,157,255,0.2) 58%), radial-gradient(circle at 74% 74%, rgba(31,202,150,0.72), transparent 66%)',
     border: '1px solid var(--border)',
+    boxShadow: '0 10px 24px rgba(3, 8, 20, 0.2)',
   },
   nav: {
     display: 'flex',
@@ -145,12 +194,14 @@ const styles: Record<string, React.CSSProperties> = {
     color: 'var(--muted)',
     border: '1px solid transparent',
     background: 'transparent',
-    transition: 'background 0.15s ease, border-color 0.15s ease, color 0.15s ease',
+    transition: 'background 0.2s ease, border-color 0.2s ease, color 0.2s ease, transform 0.2s ease',
   },
   navItemActive: {
     color: 'var(--text)',
-    background: 'color-mix(in oklab, var(--primary) 12%, var(--panel))',
+    background:
+      'linear-gradient(180deg, color-mix(in oklab, var(--primary) 24%, var(--panel)), color-mix(in oklab, var(--primary) 12%, var(--panel)))',
     border: '1px solid color-mix(in oklab, var(--primary) 28%, var(--border))',
+    boxShadow: '0 10px 24px color-mix(in oklab, var(--primary) 18%, transparent)',
   },
   hint: {
     padding: 'var(--space-3)',
@@ -166,7 +217,8 @@ const styles: Record<string, React.CSSProperties> = {
   },
   topbar: {
     height: 56,
-    background: 'var(--panel)',
+    background:
+      'linear-gradient(180deg, color-mix(in oklab, var(--panel) 96%, transparent), color-mix(in oklab, var(--panel2) 88%, var(--panel)))',
     border: '1px solid var(--border)',
     borderRadius: 'var(--radius-lg)',
     boxShadow: 'var(--shadow)',
