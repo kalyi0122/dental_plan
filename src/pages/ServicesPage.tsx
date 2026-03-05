@@ -4,7 +4,8 @@ import { useAppStore } from '../store/useAppStore'
 import { useTranslation } from '../i18n/useTranslation'
 import { formatMoney } from '../domain/money'
 import type { JawRegion, ServiceCategory } from '../domain/types'
-import { Icon, ICON_LABELS, ICON_OPTIONS } from '../components/Icon'
+import { getLocalizedServiceName } from '../domain/serviceNames'
+import { Icon, ICON_OPTIONS } from '../components/Icon'
 import { Button, Card, Input, Pill, Select } from '../components/ui'
 
 const CATEGORY_OPTIONS: { value: ServiceCategory; labelKey: string }[] = [
@@ -23,23 +24,6 @@ const JAW_DEFAULT_SERVICES: { icon: string; name: string; jawRegion: JawRegion }
   { icon: 'tooth-bridge-x7', name: 'Винир x7', jawRegion: 'BOTH' },
 ]
 
-const ICON_LABELS_EN: Record<string, string> = {
-  'tooth-pin': 'Inlay',
-  implant: 'Implant',
-  'tooth-crown': 'Crown',
-  'tooth-inlay': 'Sinus lift',
-  'tooth-filling': 'Filling',
-  'tooth-extraction': 'Extraction',
-  'tooth-root-canal': 'Root canal',
-  'tooth-veneer': 'Bone graft',
-  'tooth-blue-block': 'Braces',
-  'tooth-blue-square': 'Gum former',
-  'tooth-blue-cap': 'Crown',
-  'tooth-purple-cap': 'Crown',
-  'tooth-blue-green-cap': 'Veneer',
-  'tooth-bridge-x6': 'Veneer x6',
-  'tooth-bridge-x7': 'Veneer x7',
-}
 export function ServicesPage() {
   const { t, locale } = useTranslation()
   const services = useAppStore((s) => s.services)
@@ -57,11 +41,13 @@ export function ServicesPage() {
   const [price, setPrice] = useState('120')
   const iconMenuRef = useRef<HTMLDivElement | null>(null)
 
+  const serviceDisplayName = (s: { name: string; icon: string }) => getLocalizedServiceName(s, locale)
+
   const filtered = useMemo(() => {
     const query = q.trim().toLowerCase()
     if (!query) return services
-    return services.filter((s) => `${s.name} ${s.category}`.toLowerCase().includes(query))
-  }, [services, q])
+    return services.filter((s) => `${s.name} ${serviceDisplayName(s)} ${s.category}`.toLowerCase().includes(query))
+  }, [services, q, locale])
 
   const visibleServices = useMemo(() => filtered.filter((s) => s.category === listCategory), [filtered, listCategory])
   const iconOptions = useMemo(() => {
@@ -112,14 +98,7 @@ export function ServicesPage() {
   }
 
   const iconLabel = (iconName: string) => {
-    if (locale === 'en') return ICON_LABELS_EN[iconName] ?? iconName
-    return ICON_LABELS[iconName] ?? iconName
-  }
-
-  const serviceDisplayName = (s: { name: string; icon: string; category: ServiceCategory }) => {
-    // In EN mode, prefer standardized icon labels for tooth/jaw procedures.
-    if (locale === 'en' && s.category !== 'GENERAL') return iconLabel(s.icon)
-    return s.name
+    return getLocalizedServiceName({ name: iconName, icon: iconName }, locale)
   }
 
   return (
@@ -181,7 +160,7 @@ export function ServicesPage() {
                     </div>
                   ) : null}
                   <div className="row-main" style={{ minWidth: 0 }}>
-                    <div style={{ fontWeight: 650 }}>{serviceDisplayName(s)}</div>
+                      <div style={{ fontWeight: 650 }}>{serviceDisplayName(s)}</div>
                     <div className="muted" style={{ fontSize: 13 }}>
                       {formatMoney(s.priceCents, currency)}
                     </div>
@@ -347,7 +326,7 @@ export function ServicesPage() {
           </Button>
 
           <div className="muted" style={{ fontSize: 12 }}>
-            Recommended: keep names consistent (e.g. “Crown – Zirconia”, “Crown – Metal ceramic”).
+            {t('services.recommended')}
           </div>
         </div>
       </Card>
@@ -464,5 +443,6 @@ const styles: Record<string, React.CSSProperties> = {
     background: 'color-mix(in oklab, var(--primary) 16%, var(--panel))',
   },
 }
+
 
 

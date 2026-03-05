@@ -32,7 +32,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     'patients.email': 'Email',
     'patients.placeholderName': 'e.g. Jane Doe',
     'patients.placeholderPhone': '+1 555 123 456',
-    'patients.placeholderEmail': 'jane@example.com',
+    'patients.placeholderEmail': 'jane@gmail.com',
     'patients.createPatient': 'Create patient',
     'patients.demoNote': 'Demo note: data is stored in your browser local storage.',
 
@@ -163,7 +163,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     'patients.email': 'Email',
     'patients.placeholderName': 'например Иван Иванов',
     'patients.placeholderPhone': '+7 999 123 45 67',
-    'patients.placeholderEmail': 'ivan@example.com',
+    'patients.placeholderEmail': 'ivan@gmail.com',
     'patients.createPatient': 'Создать пациента',
     'patients.demoNote': 'Данные хранятся в локальном хранилище браузера.',
 
@@ -289,7 +289,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     'patients.email': 'Email',
     'patients.placeholderName': 'мис. Айгүл Садырова',
     'patients.placeholderPhone': '+996 555 123 456',
-    'patients.placeholderEmail': 'aigul@example.com',
+    'patients.placeholderEmail': 'aigul@gmail.com',
     'patients.createPatient': 'Пациентти түзүү',
     'patients.demoNote': 'Маалымат браузердин локалдык сактоосунда.',
 

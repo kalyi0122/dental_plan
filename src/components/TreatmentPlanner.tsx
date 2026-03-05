@@ -7,6 +7,7 @@ import { useTranslation } from '../i18n/useTranslation'
 import { DentalChart } from './DentalChart'
 import { formatMoney } from '../domain/money'
 import { sortTeethFdi, toDisplayToothLabel, mapPlanToToothConditions } from '../domain/teeth'
+import { getLocalizedServiceName } from '../domain/serviceNames'
 import { Button, Card, Divider, Input, Pill, Select } from './ui'
 import { Icon } from './Icon'
 
@@ -28,6 +29,7 @@ export function TreatmentPlanner({ plan }: { plan: TreatmentPlan }) {
   const [newStageName, setNewStageName] = useState('')
 
   const serviceById = useMemo(() => new Map(services.map((s) => [s.id, s])), [services])
+  const localizedServiceName = (svc: { name: string; icon: string }) => getLocalizedServiceName(svc, settings.locale)
 
   // re‑use the same logic that the PDF generator uses; keeps the UI and PDF in sync
   const toothConditions = useMemo(() => mapPlanToToothConditions(plan, serviceById), [plan, serviceById])
@@ -36,9 +38,9 @@ export function TreatmentPlanner({ plan }: { plan: TreatmentPlan }) {
     const q = serviceQuery.trim().toLowerCase()
     return services
       .filter((s) => s.category === category)
-      .filter((s) => (!q ? true : s.name.toLowerCase().includes(q)))
-      .sort((a, b) => a.name.localeCompare(b.name))
-  }, [services, category, serviceQuery])
+      .filter((s) => (!q ? true : `${s.name} ${localizedServiceName(s)}`.toLowerCase().includes(q)))
+      .sort((a, b) => localizedServiceName(a).localeCompare(localizedServiceName(b)))
+  }, [services, category, serviceQuery, settings.locale])
 
   const stages = plan.stages.slice().sort((a, b) => a.order - b.order)
 
@@ -52,13 +54,13 @@ export function TreatmentPlanner({ plan }: { plan: TreatmentPlan }) {
     })
     map.forEach((arr) => {
       arr.sort((a, b) => {
-        const sa = serviceById.get(a.serviceId)?.name ?? ''
-        const sb = serviceById.get(b.serviceId)?.name ?? ''
+        const sa = localizedServiceName(serviceById.get(a.serviceId) ?? { name: '', icon: '' })
+        const sb = localizedServiceName(serviceById.get(b.serviceId) ?? { name: '', icon: '' })
         return sa.localeCompare(sb)
       })
     })
     return map
-  }, [plan.procedures, serviceById])
+  }, [plan.procedures, serviceById, settings.locale])
 
   const stageOptions = useMemo(() => {
     return [
@@ -130,7 +132,7 @@ export function TreatmentPlanner({ plan }: { plan: TreatmentPlan }) {
                   <Icon name={s.icon} size={24} />
                 </div>
                 <div style={{ minWidth: 0, overflow: 'hidden' }}>
-                  <div style={{ fontWeight: 650, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.name}</div>
+                  <div style={{ fontWeight: 650, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{localizedServiceName(s)}</div>
                   <div className="muted" style={{ fontSize: 13, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     {formatMoney(s.priceCents, settings.currency)}
                   </div>
@@ -238,6 +240,7 @@ export function TreatmentPlanner({ plan }: { plan: TreatmentPlan }) {
             stageId={undefined}
             stageOptions={stageOptions}
             serviceById={serviceById}
+            locale={settings.locale}
           />
 
           {stages.map((st) => (
@@ -250,6 +253,7 @@ export function TreatmentPlanner({ plan }: { plan: TreatmentPlan }) {
               stageId={st.id}
               stageOptions={stageOptions}
               serviceById={serviceById}
+              locale={settings.locale}
             />
           ))}
         </div>
@@ -271,6 +275,7 @@ function StageBlock({
   stageId,
   stageOptions,
   serviceById,
+  locale,
 }: {
   title: string
   procedures: PlanProcedure[]
@@ -279,6 +284,7 @@ function StageBlock({
   stageId?: string
   stageOptions: { value: string; label: string }[]
   serviceById: Map<string, { name: string; priceCents: number; icon: string }>
+  locale: 'en' | 'ru' | 'kg'
 }) {
   const { t } = useTranslation()
   const updatePlan = useAppStore((s) => s.updatePlan)
@@ -321,7 +327,9 @@ function StageBlock({
               <div className="proc-row-icon" style={styles.procIcon}>{svc ? <Icon name={svc.icon} size={22} /> : '?'}</div>
               <div className="proc-row-main" style={{ minWidth: 0, overflow: 'hidden' }}>
                 <div className="proc-row-title-row" style={{ flexWrap: 'nowrap' }}>
-                  <span className="proc-row-name" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{svc?.name ?? t('planner.missingService')}</span>
+                  <span className="proc-row-name" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {svc ? getLocalizedServiceName(svc, locale) : t('planner.missingService')}
+                  </span>
                   <Pill>
                     {p.scope === 'TOOTH'
                       ? `${(p.toothIds?.length ?? 0) || 0} ${t('planner.tooth')}`
