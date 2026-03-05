@@ -4,6 +4,7 @@ import { PatientsPage } from './pages/PatientsPage'
 import { PatientDetailPage } from './pages/PatientDetailPage'
 import { ServicesPage } from './pages/ServicesPage'
 import { SettingsPage } from './pages/SettingsPage'
+import { NotFoundPage } from './pages/NotFoundPage'
 
 export default function App() {
   return (
@@ -14,7 +15,7 @@ export default function App() {
         <Route path="/patients/:patientId" element={<PatientDetailPage />} />
         <Route path="/services" element={<ServicesPage />} />
         <Route path="/settings" element={<SettingsPage />} />
-        <Route path="*" element={<Navigate to="/patients" replace />} />
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </AppShell>
   )
