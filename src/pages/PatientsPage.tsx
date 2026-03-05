@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+﻿import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Plus, Search, Trash2 } from 'lucide-react'
 import { useAppStore } from '../store/useAppStore'
@@ -20,7 +20,7 @@ export function PatientsPage() {
     const query = q.trim().toLowerCase()
     if (!query) return patients
     return patients.filter((p) => {
-      const hay = `${p.fullName} ${p.phone ?? ''} ${p.email ?? ''}`.toLowerCase()
+      const hay = `${p.fullName} ${p.phone ? formatPhoneForDisplay(p.phone) : '—'} ${p.email ?? ''}`.toLowerCase()
       return hay.includes(query)
     })
   }, [patients, q])
@@ -56,7 +56,7 @@ export function PatientsPage() {
                   {p.email ? <Pill>{p.email}</Pill> : null}
                 </div>
                 <div className="muted" style={{ fontSize: 13, marginTop: 2 }}>
-                  {p.phone ?? '—'}
+                  {p.phone ? formatPhoneForDisplay(p.phone) : '—'}
                 </div>
               </div>
               <div className="row-actions" style={{ display: 'flex', gap: 'var(--space-2)' }}>
@@ -93,7 +93,11 @@ export function PatientsPage() {
           </div>
           <div>
             <div style={styles.label}>{t('patients.phone')}</div>
-            <Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder={t('patients.placeholderPhone')} />
+            <Input
+              value={phone}
+              onChange={(e) => setPhone(formatPhoneInput(e.target.value))}
+              placeholder={t('patients.placeholderPhone')}
+            />
           </div>
           <div>
             <div style={styles.label}>{t('patients.email')}</div>
@@ -123,6 +127,53 @@ export function PatientsPage() {
   )
 }
 
+function formatPhoneForDisplay(value: string) {
+  const raw = value.trim()
+  const hasPlus = raw.startsWith('+')
+  const digits = raw.replace(/\D/g, '')
+  if (!digits) return raw
+
+  if (digits.startsWith('996') && digits.length >= 12) {
+    return `${hasPlus ? '+' : ''}${digits.slice(0, 3)} ${digits.slice(3, 6)} ${digits.slice(6, 9)} ${digits.slice(9, 12)}`
+  }
+  if (digits.startsWith('7') && digits.length >= 11) {
+    return `${hasPlus ? '+' : ''}${digits.slice(0, 1)} ${digits.slice(1, 4)} ${digits.slice(4, 7)} ${digits.slice(7, 9)} ${digits.slice(9, 11)}`
+  }
+  if (digits.startsWith('44') && digits.length >= 12) {
+    return `${hasPlus ? '+' : ''}${digits.slice(0, 2)} ${digits.slice(2, 4)} ${digits.slice(4, 8)} ${digits.slice(8, 12)}`
+  }
+  if (digits.startsWith('1') && digits.length >= 11) {
+    return `${hasPlus ? '+' : ''}${digits.slice(0, 1)} ${digits.slice(1, 4)} ${digits.slice(4, 7)} ${digits.slice(7, 11)}`
+  }
+
+  const grouped = digits.replace(/(\d{3})(?=\d)/g, '$1 ').trim()
+  return `${hasPlus ? '+' : ''}${grouped}`
+}
+
+function formatPhoneInput(value: string) {
+  const hasPlus = value.trim().startsWith('+')
+  const digits = value.replace(/\D/g, '')
+  if (!digits) return hasPlus ? '+' : ''
+
+  const apply = (parts: number[]) => {
+    let cursor = 0
+    const chunks: string[] = []
+    for (const len of parts) {
+      if (cursor >= digits.length) break
+      chunks.push(digits.slice(cursor, cursor + len))
+      cursor += len
+    }
+    if (cursor < digits.length) chunks.push(digits.slice(cursor))
+    return `${hasPlus ? '+' : ''}${chunks.join(' ')}`
+  }
+
+  if (digits.startsWith('996')) return apply([3, 3, 3, 3])
+  if (digits.startsWith('7')) return apply([1, 3, 3, 2, 2])
+  if (digits.startsWith('1')) return apply([1, 3, 3, 4])
+  if (digits.startsWith('44')) return apply([2, 2, 4, 4])
+  return `${hasPlus ? '+' : ''}${digits.replace(/(\d{3})(?=\d)/g, '$1 ').trim()}`
+}
+
 const styles: Record<string, React.CSSProperties> = {
   label: {
     fontSize: 12,
@@ -130,4 +181,6 @@ const styles: Record<string, React.CSSProperties> = {
     marginBottom: 'var(--space-2)',
   },
 }
+
+
 
