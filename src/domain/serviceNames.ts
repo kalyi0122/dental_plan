@@ -78,15 +78,23 @@ const EN_NAME_TO_ICON: Record<string, string> = {
   'treatment planning': 'planning',
 }
 
-export function getLocalizedServiceName(service: Pick<Service, 'name' | 'icon'>, locale: Locale) {
-  const byIcon = ICON_NAME_BY_LOCALE[locale][service.icon]
-  if (byIcon) return byIcon
-  const normalizedName = service.name.trim().toLowerCase()
-  const iconFromName = EN_NAME_TO_ICON[normalizedName]
-  if (iconFromName) {
-    const byMappedIcon = ICON_NAME_BY_LOCALE[locale][iconFromName]
-    if (byMappedIcon) return byMappedIcon
+const KNOWN_NAME_TO_ICON: Record<string, string> = { ...EN_NAME_TO_ICON }
+for (const dict of Object.values(ICON_NAME_BY_LOCALE)) {
+  for (const [icon, label] of Object.entries(dict)) {
+    KNOWN_NAME_TO_ICON[label.trim().toLowerCase()] = icon
   }
-  return service.name
 }
 
+export function getLocalizedServiceName(service: Pick<Service, 'name' | 'icon'>, locale: Locale) {
+  const normalizedName = service.name.trim().toLowerCase()
+  const iconFromName = KNOWN_NAME_TO_ICON[normalizedName]
+  const isPickerLabel = service.name.trim().toLowerCase() === service.icon.trim().toLowerCase()
+
+  // Keep user-defined/custom names as-is; only localize default/demo labels.
+  if (!isPickerLabel && !iconFromName) return service.name
+
+  const targetIcon = iconFromName ?? service.icon
+  const byIcon = ICON_NAME_BY_LOCALE[locale][targetIcon]
+  if (byIcon) return byIcon
+  return service.name
+}
