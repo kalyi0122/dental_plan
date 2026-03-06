@@ -177,7 +177,9 @@ export function SettingsPage() {
               >
                 <div className="tooth-option-preview" aria-hidden="true">
                   <img className="tooth-option-image" src={fdiReferenceImage} alt="" />
+                  <div className="tooth-option-image-mask" />
                 </div>
+                <div className="tooth-option-label">{t('settings.fdiShort')}</div>
               </button>
 
               <button
@@ -190,7 +192,9 @@ export function SettingsPage() {
               >
                 <div className="tooth-option-preview" aria-hidden="true">
                   <img className="tooth-option-image" src={universalReferenceImage} alt="" />
+                  <div className="tooth-option-image-mask" />
                 </div>
+                <div className="tooth-option-label">{t('settings.universalShort')}</div>
               </button>
             </div>
             <div className="tooth-modal-actions">

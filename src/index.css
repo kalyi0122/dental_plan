@@ -914,12 +914,23 @@ textarea:focus-visible {
   place-items: center;
   min-height: 220px;
   background: #23252a;
+  position: relative;
+  overflow: hidden;
 }
 .tooth-option-image {
   width: 100%;
   height: auto;
   object-fit: contain;
   display: block;
+}
+.tooth-option-image-mask {
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  bottom: 8%;
+  height: 16%;
+  background: #23252a;
+  border-radius: 10px;
 }
 .tooth-option-label {
   margin-top: 12px;
