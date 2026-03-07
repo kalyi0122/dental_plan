@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+﻿import { useEffect, useMemo, useRef, useState } from 'react'
 import { Plus, Search, Trash2 } from 'lucide-react'
 import { useAppStore } from '../store/useAppStore'
 import { useTranslation } from '../i18n/useTranslation'
@@ -19,11 +19,17 @@ const GENERAL_ICON_OPTIONS = ['consultation', 'photos', 'xray', 'planning']
 const TOOTH_ICON_OPTIONS = ICON_OPTIONS.filter((opt) => !JAW_ICON_OPTIONS.includes(opt))
 const GENERAL_DEFAULT_ICON = 'consultation'
 const JAW_DEFAULT_SERVICES: { icon: string; name: string; jawRegion: JawRegion }[] = [
-  { icon: 'tooth-blue-block', name: 'Брекеты', jawRegion: 'BOTH' },
-  { icon: 'tooth-bridge-x6', name: 'Винир x6', jawRegion: 'BOTH' },
-  { icon: 'tooth-bridge-x7', name: 'Винир x7', jawRegion: 'BOTH' },
+  { icon: 'tooth-blue-block', name: 'Р‘СЂРµРєРµС‚С‹', jawRegion: 'BOTH' },
+  { icon: 'tooth-bridge-x6', name: 'Р’РёРЅРёСЂ x6', jawRegion: 'BOTH' },
+  { icon: 'tooth-bridge-x7', name: 'Р’РёРЅРёСЂ x7', jawRegion: 'BOTH' },
 ]
-
+const TOOTH_DEFAULT_SERVICES: { icon: string; name: string }[] = [
+  { icon: 'tooth-black-cap', name: 'Black crown' },
+  { icon: 'tooth-gold-fill', name: 'Gold filling' },
+  { icon: 'tooth-blue-fill', name: 'Blue filling' },
+  { icon: 'tooth-gray-fill', name: 'Gray filling' },
+  { icon: 'tooth-purple-canal', name: 'Root canal (purple)' },
+]
 export function ServicesPage() {
   const { t, locale } = useTranslation()
   const services = useAppStore((s) => s.services)
@@ -87,6 +93,19 @@ export function ServicesPage() {
         name: item.name,
         priceCents: 12000,
         jawRegion: item.jawRegion,
+      })
+    })
+  }, [services, upsertService])
+  useEffect(() => {
+    const existingToothIcons = new Set(services.filter((s) => s.category === 'TOOTH').map((s) => s.icon))
+    const missingDefaults = TOOTH_DEFAULT_SERVICES.filter((item) => !existingToothIcons.has(item.icon))
+    if (missingDefaults.length === 0) return
+    missingDefaults.forEach((item) => {
+      upsertService({
+        category: 'TOOTH',
+        icon: item.icon,
+        name: item.name,
+        priceCents: 12000,
       })
     })
   }, [services, upsertService])
@@ -244,7 +263,7 @@ export function ServicesPage() {
                     </span>
                     <span>{iconLabel(icon)}</span>
                   </span>
-                  <span style={{ opacity: 0.7 }}>▾</span>
+                  <span style={{ opacity: 0.7 }}>в–ѕ</span>
                 </button>
 
                 {iconMenuOpen ? (
@@ -443,6 +462,8 @@ const styles: Record<string, React.CSSProperties> = {
     background: 'color-mix(in oklab, var(--primary) 16%, var(--panel))',
   },
 }
+
+
 
 
 

@@ -151,6 +151,43 @@ const ToothBlueGreenCap: IconCmp = ({ size }) => (
   </Svg>
 )
 
+const ToothBlackCap: IconCmp = ({ size }) => (
+  <Svg size={size}>
+    <path
+      d="M4 16 C4 11 6.5 6 9.5 6 C10.7 6 11.4 6.5 12 7.3 C12.6 6.5 13.3 6 14.5 6 C17.5 6 20 11 20 16 L17.2 20 L14.9 17.8 H9.1 L6.8 20 Z"
+      fill="#1F2937"
+    />
+  </Svg>
+)
+
+const ToothGoldFill: IconCmp = ({ size }) => (
+  <Svg size={size}>
+    <path d="M4 16 C4 11 6.5 6 9.5 6 C10.7 6 11.4 6.5 12 7.3 C12.6 6.5 13.3 6 14.5 6 C17.5 6 20 11 20 16 L17.2 20 L14.9 17.8 H9.1 L6.8 20 Z" fill="#1FA8E5" />
+    <ellipse cx="12" cy="13.6" rx="5.7" ry="3.6" fill="#FACC15" />
+  </Svg>
+)
+
+const ToothBlueFill: IconCmp = ({ size }) => (
+  <Svg size={size}>
+    <path d="M4 16 C4 11 6.5 6 9.5 6 C10.7 6 11.4 6.5 12 7.3 C12.6 6.5 13.3 6 14.5 6 C17.5 6 20 11 20 16 L17.2 20 L14.9 17.8 H9.1 L6.8 20 Z" fill="#FFFFFF" stroke="#9CA3AF" />
+    <ellipse cx="12" cy="13.6" rx="5.7" ry="3.6" fill="#38BDF8" />
+  </Svg>
+)
+
+const ToothGrayFill: IconCmp = ({ size }) => (
+  <Svg size={size}>
+    <path d="M4 16 C4 11 6.5 6 9.5 6 C10.7 6 11.4 6.5 12 7.3 C12.6 6.5 13.3 6 14.5 6 C17.5 6 20 11 20 16 L17.2 20 L14.9 17.8 H9.1 L6.8 20 Z" fill="#FFFFFF" stroke="#9CA3AF" />
+    <ellipse cx="12" cy="13.6" rx="5.7" ry="3.6" fill="#9CA3AF" />
+  </Svg>
+)
+
+const ToothPurpleCanal: IconCmp = ({ size }) => (
+  <Svg size={size}>
+    <path d="M4 16 C4 11 6.5 6 9.5 6 C10.7 6 11.4 6.5 12 7.3 C12.6 6.5 13.3 6 14.5 6 C17.5 6 20 11 20 16 L17.2 20 L14.9 17.8 H9.1 L6.8 20 Z" fill="#FFFFFF" stroke="#9CA3AF" />
+    <path d="M12 7.8 V19.2" stroke="#A855F7" strokeWidth="2.4" strokeLinecap="round" />
+  </Svg>
+)
+
 // Define remaining standard fallback icons
 const JawTeeth: IconCmp = ({ size }) => (
   <Svg size={size}>
@@ -173,6 +210,11 @@ export const ICONS: Record<string, IconCmp> = {
   'tooth-blue-cap': ToothBlueCap,
   'tooth-purple-cap': ToothPurpleCap,
   'tooth-blue-green-cap': ToothBlueGreenCap,
+  'tooth-black-cap': ToothBlackCap,
+  'tooth-gold-fill': ToothGoldFill,
+  'tooth-blue-fill': ToothBlueFill,
+  'tooth-gray-fill': ToothGrayFill,
+  'tooth-purple-canal': ToothPurpleCanal,
   'tooth-bridge-x6': ToothBridgeX6,
   'tooth-bridge-x7': ToothBridgeX7,
 
@@ -218,6 +260,11 @@ export const ICON_OPTIONS = [
   'tooth-blue-cap',
   'tooth-purple-cap',
   'tooth-blue-green-cap',
+  'tooth-black-cap',
+  'tooth-gold-fill',
+  'tooth-blue-fill',
+  'tooth-gray-fill',
+  'tooth-purple-canal',
   'tooth-bridge-x6',
   'tooth-bridge-x7',
 ]
