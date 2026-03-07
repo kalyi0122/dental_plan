@@ -1,15 +1,18 @@
 import { useEffect, useMemo, useState } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
-import { Menu, Users, Wrench, X, Settings as SettingsIcon } from 'lucide-react'
+import { LogOut, Menu, ShieldCheck, Users, Wrench, X, Settings as SettingsIcon } from 'lucide-react'
+import { useAuth } from '../auth/useAuth'
 import { useAppStore } from '../store/useAppStore'
 import { useTranslation } from '../i18n/useTranslation'
 import { LanguageSwitcher } from './LanguageSwitcher'
 
-const navItems = [
+const defaultNavItems = [
   { to: '/patients', labelKey: 'nav.patients', icon: Users },
   { to: '/services', labelKey: 'nav.services', icon: Wrench },
   { to: '/settings', labelKey: 'nav.settings', icon: SettingsIcon },
 ]
+
+const adminNavItem = { to: '/admin/doctors', label: 'Doctors Admin', icon: ShieldCheck }
 
 function MogulLogo() {
   return (
@@ -36,11 +39,16 @@ function resolveTheme(theme: 'system' | 'light' | 'dark') {
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const theme = useAppStore((s) => s.settings.theme)
+  const { isAdmin, signOut, userDoctor } = useAuth()
   const location = useLocation()
   const { t } = useTranslation()
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false)
 
   const resolved = useMemo(() => resolveTheme(theme), [theme])
+  const navItems = useMemo(
+    () => (isAdmin ? [...defaultNavItems, adminNavItem] : defaultNavItems),
+    [isAdmin],
+  )
 
   useEffect(() => {
     document.documentElement.dataset.theme = resolved
@@ -117,7 +125,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 })}
               >
                 <Icon size={18} />
-                <span>{t(it.labelKey)}</span>
+                <span>{'labelKey' in it ? t(it.labelKey) : it.label}</span>
               </NavLink>
             )
           })}
@@ -146,13 +154,20 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 ? t('topbar.patients')
                 : location.pathname.startsWith('/services')
                   ? t('topbar.services')
-                  : t('topbar.settings')}
+                  : location.pathname.startsWith('/admin')
+                    ? 'Doctors Admin'
+                    : t('topbar.settings')}
             </div>
             <div className="muted topbar-subtitle" style={{ fontSize: 13 }}>
               {t('topbar.hint')}
             </div>
           </div>
-          <div className="topbar-language">
+          <div className="topbar-language" style={styles.topbarActions}>
+            <div style={styles.userChip}>{userDoctor?.full_name ?? 'Doctor'}</div>
+            <button type="button" style={styles.logoutButton} onClick={() => void signOut()}>
+              <LogOut size={15} />
+              Sign out
+            </button>
             <LanguageSwitcher />
           </div>
         </div>
@@ -248,6 +263,35 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
+  },
+  topbarActions: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 'var(--space-2)',
+  },
+  userChip: {
+    border: '1px solid var(--border)',
+    borderRadius: 999,
+    padding: '4px 10px',
+    fontSize: 12,
+    background: 'color-mix(in oklab, var(--panel2) 82%, transparent)',
+    maxWidth: 180,
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
+  },
+  logoutButton: {
+    minHeight: 34,
+    borderRadius: 'var(--radius-md)',
+    border: '1px solid var(--border)',
+    background: 'color-mix(in oklab, var(--panel2) 82%, transparent)',
+    color: 'var(--text)',
+    cursor: 'pointer',
+    padding: '6px 10px',
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 6,
+    fontSize: 13,
   },
   content: {
     marginTop: 'var(--space-5)',
