@@ -1,13 +1,24 @@
-﻿import { useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Plus, Search, Trash2 } from 'lucide-react'
+import type { DoctorPatient } from '../auth/types'
+import { useAuth } from '../auth/useAuth'
+import {
+  createDoctorPatient,
+  deleteDoctorPatient,
+  fetchDoctorPatients,
+  mapDoctorPatientToPatient,
+} from '../data/doctorPatients'
 import { useAppStore } from '../store/useAppStore'
 import { useTranslation } from '../i18n/useTranslation'
+import { supabase } from '../lib/supabaseClient'
 import { Avatar, Button, Card, Input, Pill } from '../components/ui'
 
 export function PatientsPage() {
   const { t } = useTranslation()
+  const { userDoctor } = useAuth()
   const patients = useAppStore((s) => s.patients)
+  const setPatients = useAppStore((s) => s.setPatients)
   const upsertPatient = useAppStore((s) => s.upsertPatient)
   const removePatient = useAppStore((s) => s.removePatient)
 
@@ -15,15 +26,108 @@ export function PatientsPage() {
   const [fullName, setFullName] = useState('')
   const [phone, setPhone] = useState('')
   const [email, setEmail] = useState('')
+  const [syncError, setSyncError] = useState<string | null>(null)
+  const [isBusy, setIsBusy] = useState(false)
+
+  const loadPatients = useCallback(
+    async (doctorId: string) => {
+      const { data, error } = await fetchDoctorPatients(doctorId)
+      if (error) {
+        setSyncError(error.message)
+        return
+      }
+      const rows = (data as DoctorPatient[] | null) ?? []
+      setPatients(rows.map(mapDoctorPatientToPatient))
+      setSyncError(null)
+    },
+    [setPatients],
+  )
+
+  useEffect(() => {
+    if (!userDoctor?.id) return
+    let active = true
+    void fetchDoctorPatients(userDoctor.id).then(({ data, error }) => {
+      if (!active) return
+      if (error) {
+        setSyncError(error.message)
+        return
+      }
+      const rows = (data as DoctorPatient[] | null) ?? []
+      setPatients(rows.map(mapDoctorPatientToPatient))
+      setSyncError(null)
+    })
+    return () => {
+      active = false
+    }
+  }, [setPatients, userDoctor?.id])
+
+  useEffect(() => {
+    if (!userDoctor?.id) return
+    const doctorId = userDoctor.id
+    const channel = supabase
+      .channel(`patients-realtime-${doctorId}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'patients', filter: `doctor_id=eq.${doctorId}` },
+        () => {
+          void loadPatients(doctorId)
+        },
+      )
+      .subscribe()
+
+    return () => {
+      void supabase.removeChannel(channel)
+    }
+  }, [loadPatients, userDoctor?.id])
 
   const filtered = useMemo(() => {
     const query = q.trim().toLowerCase()
     if (!query) return patients
     return patients.filter((p) => {
-      const hay = `${p.fullName} ${p.phone ? formatPhoneForDisplay(p.phone) : '—'} ${p.email ?? ''}`.toLowerCase()
+      const hay = `${p.fullName} ${p.phone ? formatPhoneForDisplay(p.phone) : '-'} ${p.email ?? ''}`.toLowerCase()
       return hay.includes(query)
     })
   }, [patients, q])
+
+  const onCreatePatient = async () => {
+    const name = fullName.trim()
+    if (!name || !userDoctor?.id) return
+
+    const newPatient = {
+      fullName: name,
+      phone: phone.trim() || undefined,
+      email: email.trim() || undefined,
+    }
+
+    setIsBusy(true)
+    setSyncError(null)
+    const { data, error } = await createDoctorPatient(userDoctor.id, newPatient)
+    setIsBusy(false)
+    if (error) {
+      setSyncError(error.message)
+      await loadPatients(userDoctor.id)
+      return
+    }
+    if (data) upsertPatient(mapDoctorPatientToPatient(data as DoctorPatient))
+
+    setFullName('')
+    setPhone('')
+    setEmail('')
+    await loadPatients(userDoctor.id)
+  }
+
+  const onDeletePatient = async (patientId: string, patientName: string) => {
+    if (!userDoctor?.id) return
+    if (!confirm(t('patients.deleteConfirm', { name: patientName }))) return
+
+    setIsBusy(true)
+    setSyncError(null)
+    removePatient(patientId)
+    const { error } = await deleteDoctorPatient(userDoctor.id, patientId)
+    setIsBusy(false)
+    if (error) setSyncError(error.message)
+    await loadPatients(userDoctor.id)
+  }
 
   return (
     <div className="layout-two-col">
@@ -56,7 +160,7 @@ export function PatientsPage() {
                   {p.email ? <Pill>{p.email}</Pill> : null}
                 </div>
                 <div className="muted" style={{ fontSize: 13, marginTop: 2 }}>
-                  {p.phone ? formatPhoneForDisplay(p.phone) : '—'}
+                  {p.phone ? formatPhoneForDisplay(p.phone) : '-'}
                 </div>
               </div>
               <div className="row-actions" style={{ display: 'flex', gap: 'var(--space-2)' }}>
@@ -66,10 +170,8 @@ export function PatientsPage() {
                 <Button
                   variant="ghost"
                   title={t('patients.deletePatient')}
-                  onClick={() => {
-                    if (!confirm(t('patients.deleteConfirm', { name: p.fullName }))) return
-                    removePatient(p.id)
-                  }}
+                  disabled={isBusy}
+                  onClick={() => void onDeletePatient(p.id, p.fullName)}
                 >
                   <Trash2 size={16} />
                 </Button>
@@ -105,22 +207,17 @@ export function PatientsPage() {
           </div>
           <Button
             variant="primary"
-            onClick={() => {
-              const name = fullName.trim()
-              if (!name) return
-              upsertPatient({ fullName: name, phone, email })
-              setFullName('')
-              setPhone('')
-              setEmail('')
-            }}
+            disabled={!userDoctor?.id || isBusy}
+            onClick={() => void onCreatePatient()}
             style={{ display: 'inline-flex', gap: 8, alignItems: 'center', justifyContent: 'center' }}
           >
             <Plus size={16} />
             {t('patients.createPatient')}
           </Button>
           <div className="muted" style={{ fontSize: 12 }}>
-            {t('patients.demoNote')}
+            Data is stored by doctor in Supabase.
           </div>
+          {syncError ? <div style={styles.errorBox}>{syncError}</div> : null}
         </div>
       </Card>
     </div>
@@ -180,7 +277,12 @@ const styles: Record<string, React.CSSProperties> = {
     color: 'var(--muted)',
     marginBottom: 'var(--space-2)',
   },
+  errorBox: {
+    borderRadius: 'var(--radius-md)',
+    border: '1px solid color-mix(in oklab, var(--danger) 45%, var(--border))',
+    background: 'color-mix(in oklab, var(--danger) 18%, var(--panel))',
+    color: 'var(--text)',
+    padding: '10px 12px',
+    fontSize: 13,
+  },
 }
-
-
-
