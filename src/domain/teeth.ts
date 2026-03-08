@@ -165,6 +165,11 @@ export function mapPlanToToothConditions(
     'tooth-blue-cap',
     'tooth-purple-cap',
     'tooth-blue-green-cap',
+    'tooth-black-cap',
+    'tooth-gold-fill',
+    'tooth-blue-fill',
+    'tooth-gray-fill',
+    'tooth-purple-canal',
   ])
 
   const crownWords = ['crown', '\u043a\u043e\u0440\u043e\u043d\u043a', '\u043a\u0430\u043f\u043f', 'prosthe', '\u0438\u043c\u043f\u043b\u0430\u043d\u0442']
@@ -180,7 +185,7 @@ export function mapPlanToToothConditions(
     '\u0434\u0435\u0441\u043d',
   ]
   const rootCanalWords = ['root canal', 'endo', '\u043a\u0430\u043d\u0430\u043b']
-  const crownIcons = new Set(['tooth-crown', 'tooth-blue-cap', 'tooth-purple-cap', 'implant'])
+  const crownIcons = new Set(['tooth-crown', 'tooth-blue-cap', 'tooth-purple-cap', 'tooth-black-cap', 'implant'])
   const fillingIcons = new Set([
     'tooth-filling',
     'tooth-pin',
@@ -188,6 +193,9 @@ export function mapPlanToToothConditions(
     'tooth-veneer',
     'tooth-blue-block',
     'tooth-blue-green-cap',
+    'tooth-gold-fill',
+    'tooth-blue-fill',
+    'tooth-gray-fill',
   ])
   const upperBracesTeeth = Array.from({ length: 14 }, (_, i) => universalToFdi(String(i + 2))).filter(isValidFdiToothId)
   const lowerBracesTeeth = Array.from({ length: 14 }, (_, i) => universalToFdi(String(i + 18))).filter(isValidFdiToothId)
@@ -228,7 +236,7 @@ export function mapPlanToToothConditions(
     const isCrown = crownIcons.has(icon) || hasAny(name, crownWords)
     const isExtraction = icon === 'tooth-extraction' || hasAny(name, extractionWords)
     const isFilling = fillingIcons.has(icon) || hasAny(name, fillingWords)
-    const isRootCanal = icon === 'tooth-root-canal' || hasAny(name, rootCanalWords)
+    const isRootCanal = icon === 'tooth-root-canal' || icon === 'tooth-purple-canal' || hasAny(name, rootCanalWords)
     targetToothIds.forEach((id) => {
       const prev = result.get(id) || {}
       if (visualIcons.has(icon)) prev.visualIcon = icon
@@ -310,6 +318,7 @@ export function buildDentalChartSvg(
       let crownStroke = '#111111'
       const visualIcon = cond?.visualIcon
       const iconScale = 1.2
+      const pinScale = 1.3
       const x6UpOffset = 0
       const x6DownOffset = -10
 
@@ -319,10 +328,16 @@ export function buildDentalChartSvg(
       } else if (visualIcon === 'tooth-purple-cap') {
         crownFill = '#FFFFFF'
         crownStroke = '#9CA3AF'
+      } else if (visualIcon === 'tooth-black-cap') {
+        crownFill = '#FFFFFF'
+        crownStroke = '#9CA3AF'
       } else if (visualIcon === 'tooth-blue-green-cap') {
         crownFill = '#FFFFFF'
         crownStroke = '#9CA3AF'
       } else if (visualIcon === 'tooth-filling') {
+        crownFill = '#FFFFFF'
+        crownStroke = '#9CA3AF'
+      } else if (visualIcon === 'tooth-gold-fill' || visualIcon === 'tooth-blue-fill' || visualIcon === 'tooth-gray-fill') {
         crownFill = '#FFFFFF'
         crownStroke = '#9CA3AF'
       } else if (visualIcon === 'tooth-crown') {
@@ -355,12 +370,12 @@ export function buildDentalChartSvg(
       if (visualIcon === 'tooth-pin' && !cond?.hasExtraction) {
         svg += `<g transform="scale(${iconScale})">`
         if (isUp) {
-          svg += `<g transform="translate(0,8) scale(1.9,-1.9)">`
+          svg += `<g transform="translate(0,7) scale(${pinScale},-${pinScale})">`
           svg += `<rect x="-10.5" y="-4" width="21" height="9.2" rx="3" fill="#58A6FF" />`
           svg += `<rect x="-3" y="4.2" width="6" height="17.2" rx="3" fill="#55D6FF" />`
           svg += `</g>`
         } else {
-          svg += `<g transform="translate(0,-4) scale(1.9)">`
+          svg += `<g transform="translate(0,-3) scale(${pinScale})">`
           svg += `<rect x="-10.5" y="-4" width="21" height="9.2" rx="3" fill="#58A6FF" />`
           svg += `<rect x="-3" y="4.2" width="6" height="17.2" rx="3" fill="#55D6FF" />`
           svg += `</g>`
@@ -438,6 +453,16 @@ export function buildDentalChartSvg(
         svg += `</g>`
         svg += `</g>`
       }
+      if (visualIcon === 'tooth-black-cap' && !cond?.hasExtraction) {
+        const capPath = isUp
+          ? 'M-9,3 C-7,0 -3,-1 0,1.8 C3,-1 7,0 9,3 L7,12.5 C5,15.2 3.2,14.7 0,13 C-3.2,14.7 -5,15.2 -7,12.5 Z'
+          : 'M-9,-3 C-7,0 -3,1 0,-1.8 C3,1 7,0 9,-3 L7,-12.5 C5,-15.2 3.2,-14.7 0,-13 C-3.2,-14.7 -5,-15.2 -7,-12.5 Z'
+        svg += `<g transform="scale(${iconScale})">`
+        svg += `<g transform="scale(1.9)">`
+        svg += `<path d="${capPath}" fill="#1F2937" stroke="#111827" stroke-width="1.2" stroke-linejoin="round" />`
+        svg += `</g>`
+        svg += `</g>`
+      }
       if (visualIcon === 'tooth-veneer' && !cond?.hasExtraction) {
         svg += `<g transform="scale(${iconScale})">`
         svg += `<rect x="-25" y="${isUp ? -37 : 23.5}" width="75" height="25" rx="3.8" fill="#24E035" />`
@@ -457,6 +482,15 @@ export function buildDentalChartSvg(
         svg += `</g>`
         svg += `</g>`
       }
+      if ((visualIcon === 'tooth-gold-fill' || visualIcon === 'tooth-blue-fill' || visualIcon === 'tooth-gray-fill') && !cond?.hasExtraction) {
+        const fill = visualIcon === 'tooth-gold-fill' ? '#FACC15' : visualIcon === 'tooth-blue-fill' ? '#38BDF8' : '#9CA3AF'
+        const stroke = visualIcon === 'tooth-gold-fill' ? '#CA8A04' : visualIcon === 'tooth-blue-fill' ? '#0284C7' : '#6B7280'
+        svg += `<g transform="scale(${iconScale})">`
+        svg += `<g transform="scale(1.8)">`
+        svg += `<ellipse cx="0" cy="${isUp ? 9.5 : -9.5}" rx="5.2" ry="3.3" fill="${fill}" stroke="${stroke}" stroke-width="0.9" />`
+        svg += `</g>`
+        svg += `</g>`
+      }
       if (visualIcon === 'tooth-blue-green-cap' && !cond?.hasExtraction) {
         const inner = isUp ? 'M-8.5,14.5 Q0,22 8.5,14.5 Q0,31 -8.5,14.5' : 'M-8.5,-14.5 Q0,-22 8.5,-14.5 Q0,-31 -8.5,-14.5'
         svg += `<g transform="scale(${iconScale})">`
@@ -465,6 +499,10 @@ export function buildDentalChartSvg(
         svg += `<g transform="translate(0,${isUp ? -12 : 15})"><path d="${inner}" fill="#34E33C" stroke="#24C92D" stroke-width="0.95" /></g>`
         svg += `</g>`
         svg += `</g>`
+      }
+      if (visualIcon === 'tooth-purple-canal' && !cond?.hasExtraction) {
+        const rootCanalPath = isUp ? 'M0,-40 L0,5' : 'M0,40 L0,-5'
+        svg += `<path class="tooth-root-canal" d="${rootCanalPath}" />`
       }
       if (cond?.hasCrown && !cond?.hasExtraction && !visualIcon) {
         const capPath = isUp ? 'M-10,-2 Q0,-10 10,-2' : 'M-10,2 Q0,10 10,2'

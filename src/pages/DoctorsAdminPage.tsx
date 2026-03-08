@@ -3,9 +3,11 @@ import { Pencil, Plus, Save, Trash2, UserRoundSearch, X } from 'lucide-react'
 import type { DoctorPatient } from '../auth/types'
 import { useAuth } from '../auth/useAuth'
 import { supabase } from '../lib/supabaseClient'
+import { useTranslation } from '../i18n/useTranslation'
 import { Avatar, Button, Card, Input, Pill } from '../components/ui'
 
 export function DoctorsAdminPage() {
+  const { t } = useTranslation()
   const { doctors, userDoctor, addDoctor, updateDoctor, deleteDoctor, getDoctorPatients } = useAuth()
   const [selectedDoctorId, setSelectedDoctorId] = useState('')
   const [doctorPatients, setDoctorPatients] = useState<DoctorPatient[]>([])
@@ -35,12 +37,12 @@ export function DoctorsAdminPage() {
         const patients = await getDoctorPatients(doctorId)
         setDoctorPatients(patients)
       } catch (error) {
-        const message = error instanceof Error ? error.message : 'Failed to load doctor patients.'
+        const message = error instanceof Error ? error.message : t('admin.error.loadDoctorPatients')
         setPatientsError(message)
         setDoctorPatients([])
       }
     },
-    [getDoctorPatients],
+    [getDoctorPatients, t],
   )
 
   const selectDoctor = async (doctorId: string) => {
@@ -124,7 +126,7 @@ export function DoctorsAdminPage() {
   }
 
   const onDeleteDoctor = async (doctorId: string, fullName: string) => {
-    if (!confirm(`Delete doctor "${fullName}"?`)) return
+    if (!confirm(t('admin.deleteConfirm', { name: fullName }))) return
     setFeedback(null)
     setBusy(true)
     const result = await deleteDoctor(doctorId)
@@ -143,8 +145,8 @@ export function DoctorsAdminPage() {
     <>
       <div className="layout-two-col">
         <Card
-          title="Doctors"
-          subtitle={`${sortedDoctors.length} total`}
+          title={t('admin.doctorsTitle')}
+          subtitle={`${sortedDoctors.length} ${t('admin.total')}`}
           right={
             <Button
               variant="primary"
@@ -152,7 +154,7 @@ export function DoctorsAdminPage() {
               style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}
             >
               <Plus size={16} />
-              Create Doctor
+              {t('admin.createDoctor')}
             </Button>
           }
         >
@@ -185,8 +187,8 @@ export function DoctorsAdminPage() {
                   <div style={{ minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
                       <div style={{ fontWeight: 650 }}>{doctor.full_name}</div>
-                      {doctor.is_admin ? <Pill>Admin</Pill> : null}
-                      {doctor.id === userDoctor?.id ? <Pill>You</Pill> : null}
+                      {doctor.is_admin ? <Pill>{t('admin.pillAdmin')}</Pill> : null}
+                      {doctor.id === userDoctor?.id ? <Pill>{t('admin.pillYou')}</Pill> : null}
                     </div>
                     <div className="muted" style={{ fontSize: 12, marginTop: 2 }}>
                       {doctor.email}
@@ -195,7 +197,7 @@ export function DoctorsAdminPage() {
                   <div className="row-actions" style={{ display: 'flex', gap: 'var(--space-2)' }}>
                     <Button
                       variant="danger"
-                      title="Delete doctor"
+                      title={t('admin.deleteDoctorTitle')}
                       disabled={busy || doctor.id === userDoctor?.id}
                       onClick={(event) => {
                         event.preventDefault()
@@ -212,22 +214,22 @@ export function DoctorsAdminPage() {
 
             {sortedDoctors.length === 0 ? (
               <div className="muted" style={{ padding: 16, textAlign: 'center' }}>
-                No doctors in database.
+                {t('admin.noDoctors')}
               </div>
             ) : null}
           </div>
         </Card>
 
         <div style={{ display: 'grid', gap: 'var(--space-4)', minWidth: 0 }}>
-          <Card title="Edit Doctor" subtitle="Update selected doctor profile">
+          <Card title={t('admin.editDoctorTitle')} subtitle={t('admin.editDoctorSubtitle')}>
             {selectedDoctor ? (
               <div style={{ display: 'grid', gap: 'var(--space-3)' }}>
                 <div>
-                  <div style={styles.label}>Full name</div>
+                  <div style={styles.label}>{t('admin.fullName')}</div>
                   <Input value={editName} onChange={(event) => setEditName(event.target.value)} />
                 </div>
                 <div>
-                  <div style={styles.label}>Email</div>
+                  <div style={styles.label}>{t('admin.email')}</div>
                   <Input value={selectedDoctor.email} disabled />
                 </div>
                 <label style={styles.checkRow}>
@@ -236,7 +238,7 @@ export function DoctorsAdminPage() {
                     checked={editIsAdmin}
                     onChange={(event) => setEditIsAdmin(event.target.checked)}
                   />
-                  <span>Doctor is admin</span>
+                  <span>{t('admin.doctorIsAdmin')}</span>
                 </label>
                 <Button
                   variant="primary"
@@ -245,27 +247,30 @@ export function DoctorsAdminPage() {
                   style={{ display: 'inline-flex', alignItems: 'center', gap: 8, justifyContent: 'center' }}
                 >
                   <Save size={16} />
-                  Save changes
+                  {t('admin.saveChanges')}
                 </Button>
               </div>
             ) : (
               <div className="muted" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <Pencil size={16} />
-                Select a doctor from the list.
+                {t('admin.selectDoctor')}
               </div>
             )}
             {feedback ? <div style={styles.errorBox}>{feedback}</div> : null}
           </Card>
 
-          <Card title="Doctor Patients" subtitle={selectedDoctor ? selectedDoctor.full_name : 'No doctor selected'}>
+          <Card
+            title={t('admin.doctorPatientsTitle')}
+            subtitle={selectedDoctor ? selectedDoctor.full_name : t('admin.noDoctorSelected')}
+          >
             {patientsError ? <div style={styles.errorBox}>{patientsError}</div> : null}
             {!selectedDoctor ? (
               <div className="muted" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <UserRoundSearch size={16} />
-                Click a doctor to load their patients.
+                {t('admin.clickDoctorToLoadPatients')}
               </div>
             ) : doctorPatients.length === 0 ? (
-              <div className="muted">No patients for this doctor.</div>
+              <div className="muted">{t('admin.noPatientsForDoctor')}</div>
             ) : (
               <div style={{ display: 'grid', gap: 'var(--space-2)' }}>
                 {doctorPatients.map((patient) => (
@@ -293,33 +298,33 @@ export function DoctorsAdminPage() {
             onClick={(event) => event.stopPropagation()}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-              <div style={{ fontWeight: 700, fontSize: 18 }}>Create Doctor Account</div>
+              <div style={{ fontWeight: 700, fontSize: 18 }}>{t('admin.createDoctorAccount')}</div>
               <button type="button" style={styles.iconClose} onClick={() => setIsCreateModalOpen(false)}>
                 <X size={16} />
               </button>
             </div>
             <div style={{ display: 'grid', gap: 'var(--space-3)' }}>
               <div>
-                <div style={styles.label}>Full name</div>
+                <div style={styles.label}>{t('admin.fullName')}</div>
                 <Input value={createName} onChange={(event) => setCreateName(event.target.value)} />
               </div>
               <div>
-                <div style={styles.label}>Email</div>
+                <div style={styles.label}>{t('admin.email')}</div>
                 <Input
                   type="email"
                   value={createEmail}
                   onChange={(event) => setCreateEmail(event.target.value)}
-                  placeholder="doctor@clinic.com"
+                  placeholder={t('auth.emailPlaceholder')}
                 />
               </div>
               <div>
-                <div style={styles.label}>Password</div>
+                <div style={styles.label}>{t('auth.password')}</div>
                 <Input
                   type="password"
                   minLength={6}
                   value={createPassword}
                   onChange={(event) => setCreatePassword(event.target.value)}
-                  placeholder="At least 6 characters"
+                  placeholder={t('admin.passwordPlaceholder')}
                 />
               </div>
               <label style={styles.checkRow}>
@@ -328,7 +333,7 @@ export function DoctorsAdminPage() {
                   checked={createIsAdmin}
                   onChange={(event) => setCreateIsAdmin(event.target.checked)}
                 />
-                <span>Grant admin rights</span>
+                <span>{t('admin.grantAdminRights')}</span>
               </label>
               <Button
                 variant="primary"
@@ -337,7 +342,7 @@ export function DoctorsAdminPage() {
                 style={{ display: 'inline-flex', alignItems: 'center', gap: 8, justifyContent: 'center' }}
               >
                 <Plus size={16} />
-                Create account
+                {t('admin.createAccount')}
               </Button>
             </div>
           </div>

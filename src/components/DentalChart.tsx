@@ -75,13 +75,13 @@ export function DentalChart({
         <span className="muted">{t('chart.selected')}</span>
         <span style={{ width: 12 }} />
         <span style={{ ...styles.legendSwatch, background: '#FDE047' }} />
-        <span className="muted">Crown</span>
+        <span className="muted">{t('chart.legendCrown')}</span>
         <span style={{ width: 12 }} />
         <span style={{ ...styles.legendSwatch, background: '#38A169' }} />
-        <span className="muted">Filling</span>
+        <span className="muted">{t('chart.legendFilling')}</span>
         <span style={{ width: 12 }} />
         <span style={{ ...styles.legendSwatch, background: '#1F2937' }} />
-        <span className="muted">Extracted</span>
+        <span className="muted">{t('chart.legendExtracted')}</span>
       </div>
     </div>
   )
@@ -110,6 +110,7 @@ function ToothNode({
   const isUp = fdi.startsWith('1') || fdi.startsWith('2')
   const visualIcon = condition?.visualIcon
   const iconScale = 1.2
+  const pinScale = 1.3
   const x6UpOffset = 0
   const x6DownOffset = -10
 
@@ -129,10 +130,16 @@ function ToothNode({
   } else if (visualIcon === 'tooth-purple-cap') {
     crownColor = selected ? 'rgba(56, 182, 255, 0.4)' : '#FFFFFF'
     crownStroke = '#9CA3AF'
+  } else if (visualIcon === 'tooth-black-cap') {
+    crownColor = selected ? 'rgba(56, 182, 255, 0.4)' : '#FFFFFF'
+    crownStroke = '#9CA3AF'
   } else if (visualIcon === 'tooth-blue-green-cap') {
     crownColor = selected ? 'rgba(56, 182, 255, 0.4)' : '#FFFFFF'
     crownStroke = '#9CA3AF'
   } else if (visualIcon === 'tooth-filling') {
+    crownColor = selected ? 'rgba(56, 182, 255, 0.4)' : '#FFFFFF'
+    crownStroke = '#9CA3AF'
+  } else if (visualIcon === 'tooth-gold-fill' || visualIcon === 'tooth-blue-fill' || visualIcon === 'tooth-gray-fill') {
     crownColor = selected ? 'rgba(56, 182, 255, 0.4)' : '#FFFFFF'
     crownStroke = '#9CA3AF'
   } else if (visualIcon === 'tooth-crown') {
@@ -205,7 +212,7 @@ function ToothNode({
         />
         {visualIcon === 'tooth-pin' && !condition?.hasExtraction && (
           <g transform={`scale(${iconScale})`}>
-            <g transform={isUp ? 'translate(0, 8) scale(1.9, -1.9)' : 'translate(0, -4) scale(1.9)'}>
+            <g transform={isUp ? `translate(0, 7) scale(${pinScale}, -${pinScale})` : `translate(0, -3) scale(${pinScale})`}>
               <rect x="-10.5" y="-4" width="21" height="9.2" rx="3" fill="#58A6FF" />
               <rect x="-3" y="4.2" width="6" height="17.2" rx="3" fill="#55D6FF" />
             </g>
@@ -322,6 +329,19 @@ function ToothNode({
             </g>
           </g>
         )}
+        {visualIcon === 'tooth-black-cap' && !condition?.hasExtraction && (
+          <g transform={`scale(${iconScale})`}>
+            <g transform="scale(1.9)">
+              <path
+                d={isUp ? 'M-9,3 C-7,0 -3,-1 0,1.8 C3,-1 7,0 9,3 L7,12.5 C5,15.2 3.2,14.7 0,13 C-3.2,14.7 -5,15.2 -7,12.5 Z' : 'M-9,-3 C-7,0 -3,1 0,-1.8 C3,1 7,0 9,-3 L7,-12.5 C5,-15.2 3.2,-14.7 0,-13 C-3.2,-14.7 -5,-15.2 -7,-12.5 Z'}
+                fill="#1F2937"
+                stroke="#111827"
+                strokeWidth="1.2"
+                strokeLinejoin="round"
+              />
+            </g>
+          </g>
+        )}
         {visualIcon === 'tooth-veneer' && !condition?.hasExtraction && (
           <g transform={`scale(${iconScale})`}>
             <rect x="-25" y={isUp ? -37 : 23.5} width="75" height="25" rx="3.8" fill="#24E035" />
@@ -347,6 +367,21 @@ function ToothNode({
             </g>
           </g>
         )}
+        {(visualIcon === 'tooth-gold-fill' || visualIcon === 'tooth-blue-fill' || visualIcon === 'tooth-gray-fill') && !condition?.hasExtraction && (
+          <g transform={`scale(${iconScale})`}>
+            <g transform="scale(1.8)">
+              <ellipse
+                cx="0"
+                cy={isUp ? 9.5 : -9.5}
+                rx="5.2"
+                ry="3.3"
+                fill={visualIcon === 'tooth-gold-fill' ? '#FACC15' : visualIcon === 'tooth-blue-fill' ? '#38BDF8' : '#9CA3AF'}
+                stroke={visualIcon === 'tooth-gold-fill' ? '#CA8A04' : visualIcon === 'tooth-blue-fill' ? '#0284C7' : '#6B7280'}
+                strokeWidth="0.9"
+              />
+            </g>
+          </g>
+        )}
         {visualIcon === 'tooth-blue-green-cap' && !condition?.hasExtraction && (
           <g transform={`scale(${iconScale})`}>
             <g transform="scale(1.9)">
@@ -368,6 +403,14 @@ function ToothNode({
               </g>
             </g>
           </g>
+        )}
+        {visualIcon === 'tooth-purple-canal' && !condition?.hasExtraction && (
+          <path
+            d={isUp ? "M0,-40 L0,5" : "M0,40 L0,-5"}
+            stroke="#A855F7"
+            strokeWidth="3.5"
+            strokeLinecap="round"
+          />
         )}
 
         {/* Draw Filling annotation if present */}

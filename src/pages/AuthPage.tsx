@@ -2,8 +2,10 @@ import { useState } from 'react'
 import { ShieldAlert } from 'lucide-react'
 import { useAuth } from '../auth/useAuth'
 import { Button, Card, Input } from '../components/ui'
+import { useTranslation } from '../i18n/useTranslation'
 
 export function AuthPage() {
+  const { t } = useTranslation()
   const { authError, signInWithEmail } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -26,31 +28,31 @@ export function AuthPage() {
   return (
     <div className="auth-screen">
       <div className="auth-grid">
-        <Card title="Doctor Login" subtitle="Use email and password created by admin.">
+        <Card title={t('auth.loginTitle')} subtitle={t('auth.loginSubtitle')}>
           <form onSubmit={onSubmit} style={{ display: 'grid', gap: 'var(--space-4)' }}>
             <div>
-              <div style={styles.label}>Email</div>
+              <div style={styles.label}>{t('auth.email')}</div>
               <Input
                 type="email"
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
-                placeholder="doctor@clinic.com"
+                placeholder={t('auth.emailPlaceholder')}
               />
             </div>
 
             <div>
-              <div style={styles.label}>Password</div>
+              <div style={styles.label}>{t('auth.password')}</div>
               <Input
                 type="password"
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
                 minLength={6}
-                placeholder="Password"
+                placeholder={t('auth.passwordPlaceholder')}
               />
             </div>
 
             <Button variant="primary" type="submit" disabled={isSubmitting}>
-              {isSubmitting ? 'Please wait...' : 'Login'}
+              {isSubmitting ? t('auth.pleaseWait') : t('auth.loginButton')}
             </Button>
 
             {resultMessage ? <div style={styles.errorBox}>{resultMessage}</div> : null}
@@ -58,18 +60,18 @@ export function AuthPage() {
           </form>
         </Card>
 
-        <Card title="Admin setup required" subtitle="Admin creates doctor accounts in modal window.">
+        <Card title={t('auth.setupTitle')} subtitle={t('auth.setupSubtitle')}>
           <div style={{ display: 'grid', gap: 'var(--space-3)' }}>
             <div className="muted" style={{ fontSize: 14 }}>
-              Open SQL Editor and run setup SQL. Then login as admin and create doctors with email/password.
+              {t('auth.setupInfo')}
             </div>
             <div style={styles.infoRow}>
               <ShieldAlert size={16} />
-              <span>Use `admin@clinic.local` for first admin account row from setup SQL.</span>
+              <span>{t('auth.setupAdminHint')}</span>
             </div>
             <div style={styles.infoRow}>
               <ShieldAlert size={16} />
-              <span>Disable email confirmation in Supabase Auth settings.</span>
+              <span>{t('auth.setupDisableConfirmHint')}</span>
             </div>
           </div>
         </Card>
@@ -99,4 +101,3 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: 14,
   },
 }
-

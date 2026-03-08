@@ -215,7 +215,7 @@ export function PatientsPage() {
             {t('patients.createPatient')}
           </Button>
           <div className="muted" style={{ fontSize: 12 }}>
-            Data is stored by doctor in Supabase.
+            {t('patients.supabaseNote')}
           </div>
           {syncError ? <div style={styles.errorBox}>{syncError}</div> : null}
         </div>

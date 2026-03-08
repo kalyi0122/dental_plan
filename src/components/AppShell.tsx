@@ -12,7 +12,7 @@ const defaultNavItems = [
   { to: '/settings', labelKey: 'nav.settings', icon: SettingsIcon },
 ]
 
-const adminNavItem = { to: '/admin/doctors', label: 'Doctors Admin', icon: ShieldCheck }
+const adminNavItem = { to: '/admin/doctors', labelKey: 'nav.admin', icon: ShieldCheck }
 
 function MogulLogo() {
   return (
@@ -65,8 +65,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }, [theme])
 
   useEffect(() => {
-    setIsMobileNavOpen(false)
-  }, [location.pathname])
+    if (!isMobileNavOpen) return
+    const timeoutId = window.setTimeout(() => setIsMobileNavOpen(false), 0)
+    return () => window.clearTimeout(timeoutId)
+  }, [isMobileNavOpen, location.pathname])
 
   useEffect(() => {
     if (!isMobileNavOpen) return
@@ -125,7 +127,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 })}
               >
                 <Icon size={18} />
-                <span>{'labelKey' in it ? t(it.labelKey) : it.label}</span>
+                <span>{t(it.labelKey)}</span>
               </NavLink>
             )
           })}
@@ -143,7 +145,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               type="button"
               className="mobile-menu-btn"
               onClick={() => setIsMobileNavOpen((v) => !v)}
-              aria-label={isMobileNavOpen ? 'Close menu' : 'Open menu'}
+              aria-label={isMobileNavOpen ? t('common.closeMenu') : t('common.openMenu')}
               aria-expanded={isMobileNavOpen}
               aria-controls="app-navigation"
             >
@@ -155,7 +157,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 : location.pathname.startsWith('/services')
                   ? t('topbar.services')
                   : location.pathname.startsWith('/admin')
-                    ? 'Doctors Admin'
+                    ? t('topbar.admin')
                     : t('topbar.settings')}
             </div>
             <div className="muted topbar-subtitle" style={{ fontSize: 13 }}>
@@ -163,10 +165,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </div>
           </div>
           <div className="topbar-language" style={styles.topbarActions}>
-            <div style={styles.userChip}>{userDoctor?.full_name ?? 'Doctor'}</div>
+            <div style={styles.userChip}>{userDoctor?.full_name ?? t('common.doctor')}</div>
             <button type="button" style={styles.logoutButton} onClick={() => void signOut()}>
               <LogOut size={15} />
-              Sign out
+              {t('common.signOut')}
             </button>
             <LanguageSwitcher />
           </div>

@@ -3,11 +3,28 @@ create extension if not exists pgcrypto;
 create table if not exists public.doctors (
   id uuid primary key default gen_random_uuid(),
   full_name text not null,
+<<<<<<< HEAD
   email text,
+=======
+<<<<<<< HEAD
+=======
+  email text,
+>>>>>>> 6dea9ced596cf28693527eb6a38eb879fbf7b469
+>>>>>>> f26a95753d3e1f17f5d3fc0da2307a6fb5f4c06c
   is_admin boolean not null default false,
   created_at timestamptz not null default now()
 );
 
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+insert into public.doctors (full_name, is_admin)
+select 'Main Admin', true
+where not exists (select 1 from public.doctors);
+
+alter table public.doctors enable row level security;
+=======
+>>>>>>> f26a95753d3e1f17f5d3fc0da2307a6fb5f4c06c
 create table if not exists public.patients (
   id uuid primary key default gen_random_uuid(),
   doctor_id uuid not null references public.doctors(id) on delete cascade,
@@ -109,6 +126,10 @@ begin
     alter publication supabase_realtime add table public.patients;
   end if;
 end $$;
+<<<<<<< HEAD
+=======
+>>>>>>> 6dea9ced596cf28693527eb6a38eb879fbf7b469
+>>>>>>> f26a95753d3e1f17f5d3fc0da2307a6fb5f4c06c
 
 drop policy if exists "Public can read doctors" on public.doctors;
 create policy "Public can read doctors"
@@ -122,6 +143,19 @@ create policy "Admin can insert doctors"
 on public.doctors
 for insert
 to authenticated
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+with check (
+  exists (
+    select 1
+    from public.doctors d
+    where d.id = (auth.jwt() -> 'user_metadata' ->> 'doctor_id')::uuid
+      and d.is_admin = true
+  )
+);
+=======
+>>>>>>> f26a95753d3e1f17f5d3fc0da2307a6fb5f4c06c
 with check (public.is_current_doctor_admin());
 
 drop policy if exists "Admin can update doctors" on public.doctors;
@@ -131,12 +165,28 @@ for update
 to authenticated
 using (public.is_current_doctor_admin())
 with check (public.is_current_doctor_admin());
+<<<<<<< HEAD
+=======
+>>>>>>> 6dea9ced596cf28693527eb6a38eb879fbf7b469
+>>>>>>> f26a95753d3e1f17f5d3fc0da2307a6fb5f4c06c
 
 drop policy if exists "Admin can delete doctors" on public.doctors;
 create policy "Admin can delete doctors"
 on public.doctors
 for delete
 to authenticated
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+using (
+  exists (
+    select 1
+    from public.doctors d
+    where d.id = (auth.jwt() -> 'user_metadata' ->> 'doctor_id')::uuid
+      and d.is_admin = true
+  )
+=======
+>>>>>>> f26a95753d3e1f17f5d3fc0da2307a6fb5f4c06c
 using (public.is_current_doctor_admin());
 
 drop policy if exists "Doctor or admin can read patients" on public.patients;
@@ -181,4 +231,8 @@ to authenticated
 using (
   doctor_id = public.current_doctor_id()
   or public.is_current_doctor_admin()
+<<<<<<< HEAD
+=======
+>>>>>>> 6dea9ced596cf28693527eb6a38eb879fbf7b469
+>>>>>>> f26a95753d3e1f17f5d3fc0da2307a6fb5f4c06c
 );

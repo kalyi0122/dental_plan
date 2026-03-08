@@ -1,4 +1,4 @@
-import type { Locale, Service } from './types'
+﻿import type { Locale, Service } from './types'
 
 const ICON_NAME_BY_LOCALE: Record<Locale, Record<string, string>> = {
   en: {
@@ -15,6 +15,11 @@ const ICON_NAME_BY_LOCALE: Record<Locale, Record<string, string>> = {
     'tooth-blue-cap': 'Crown',
     'tooth-purple-cap': 'Temporary crown',
     'tooth-blue-green-cap': 'Veneer',
+    'tooth-black-cap': 'Black crown',
+    'tooth-gold-fill': 'Gold filling',
+    'tooth-blue-fill': 'Blue filling',
+    'tooth-gray-fill': 'Gray filling',
+    'tooth-purple-canal': 'Root canal (purple)',
     'tooth-bridge-x6': 'Veneer x6',
     'tooth-bridge-x7': 'Veneer x7',
     consultation: 'Consultation',
@@ -25,7 +30,7 @@ const ICON_NAME_BY_LOCALE: Record<Locale, Record<string, string>> = {
   ru: {
     'tooth-pin': 'Вкладка',
     implant: 'Имплант',
-    'tooth-crown': 'Коронка',
+    'tooth-crown': 'Корона',
     'tooth-inlay': 'Синус лифтинг',
     'tooth-filling': 'Пломба',
     'tooth-extraction': 'Удаление',
@@ -33,9 +38,14 @@ const ICON_NAME_BY_LOCALE: Record<Locale, Record<string, string>> = {
     'tooth-veneer': 'Винир',
     'tooth-blue-block': 'Брекеты',
     'tooth-blue-square': 'Формирователь десны',
-    'tooth-blue-cap': 'Коронка',
-    'tooth-purple-cap': 'Временная коронка',
+    'tooth-blue-cap': 'Корона',
+    'tooth-purple-cap': 'Временная корона',
     'tooth-blue-green-cap': 'Винир',
+    'tooth-black-cap': 'Чёрная корона',
+    'tooth-gold-fill': 'Золотая пломба',
+    'tooth-blue-fill': 'Синяя пломба',
+    'tooth-gray-fill': 'Серая пломба',
+    'tooth-purple-canal': 'Корневой канал (фиолетовый)',
     'tooth-bridge-x6': 'Винир x6',
     'tooth-bridge-x7': 'Винир x7',
     consultation: 'Консультация',
@@ -46,23 +56,28 @@ const ICON_NAME_BY_LOCALE: Record<Locale, Record<string, string>> = {
   kg: {
     'tooth-pin': 'Вкладка',
     implant: 'Имплант',
-    'tooth-crown': 'Коронка',
+    'tooth-crown': 'Корона',
     'tooth-inlay': 'Синус лифтинг',
-    'tooth-filling': 'Пломба',
+    'tooth-filling': 'Толтуу',
     'tooth-extraction': 'Алуу',
-    'tooth-root-canal': 'Канал дарылоо',
+    'tooth-root-canal': 'Каналдын чыпчычы',
     'tooth-veneer': 'Винир',
-    'tooth-blue-block': 'Брекет',
-    'tooth-blue-square': 'Тиш эти формирователи',
-    'tooth-blue-cap': 'Коронка',
-    'tooth-purple-cap': 'Убактылуу коронка',
+    'tooth-blue-block': 'Брекеттер',
+    'tooth-blue-square': 'Ди эти формирователосу',
+    'tooth-blue-cap': 'Корона',
+    'tooth-purple-cap': 'Убактылуу корона',
     'tooth-blue-green-cap': 'Винир',
+    'tooth-black-cap': 'Кара корона',
+    'tooth-gold-fill': 'Алтын толтуу',
+    'tooth-blue-fill': 'Көк толтуу',
+    'tooth-gray-fill': 'Сүрөт толтуу',
+    'tooth-purple-canal': 'Каналдын чыпчычы (кызгылт)',
     'tooth-bridge-x6': 'Винир x6',
     'tooth-bridge-x7': 'Винир x7',
-    consultation: 'Кеңеш берүү',
-    photos: 'Ооз ичи сүрөтү',
+    consultation: 'Консультация',
+    photos: 'Ооз ичиндеги сүрөттөр',
     xray: 'Рентген',
-    planning: 'Дарылоо планы',
+    planning: 'Дарылоо пландоо',
   },
 }
 
@@ -98,3 +113,4 @@ export function getLocalizedServiceName(service: Pick<Service, 'name' | 'icon'>,
   if (byIcon) return byIcon
   return service.name
 }
+

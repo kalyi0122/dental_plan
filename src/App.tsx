@@ -8,6 +8,7 @@ import { ServicesPage } from './pages/ServicesPage'
 import { SettingsPage } from './pages/SettingsPage'
 import { NotFoundPage } from './pages/NotFoundPage'
 import { AuthPage } from './pages/AuthPage'
+import { useTranslation } from './i18n/useTranslation'
 
 function RequireAdmin({ children }: { children: React.ReactNode }) {
   const { isAdmin } = useAuth()
@@ -17,6 +18,7 @@ function RequireAdmin({ children }: { children: React.ReactNode }) {
 
 export default function App() {
   const { ready, session } = useAuth()
+  const { t } = useTranslation()
 
   if (!ready) {
     return (
@@ -28,7 +30,7 @@ export default function App() {
           padding: 24,
         }}
       >
-        Connecting to Supabase...
+        {t('app.connecting')}
       </div>
     )
   }

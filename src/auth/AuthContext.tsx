@@ -4,6 +4,13 @@ import { AuthContext } from './context'
 import type { AuthActionResult, AuthContextValue, CreateDoctorInput, Doctor, DoctorPatient } from './types'
 import { fetchDoctorPatients } from '../data/doctorPatients'
 import { createIsolatedSupabaseClient, supabase } from '../lib/supabaseClient'
+import { useAppStore } from '../store/useAppStore'
+import { t as translate } from '../i18n/translations'
+
+function tr(key: string, params?: Record<string, string>) {
+  const locale = useAppStore.getState().settings.locale
+  return translate(locale, key, params)
+}
 
 function normalizeEmail(email: string) {
   return email.trim().toLowerCase()
@@ -18,9 +25,9 @@ function doctorIdFromUser(user: User): string | null {
 
 function normalizeAuthMessage(message: string) {
   const normalized = message.toLowerCase()
-  if (normalized.includes('invalid login credentials')) return 'Wrong email or password.'
+  if (normalized.includes('invalid login credentials')) return tr('auth.error.wrongCredentials')
   if (normalized.includes('email not confirmed')) {
-    return 'Email confirmation is enabled. Disable it in Supabase Auth settings.'
+    return tr('auth.error.disableEmailConfirmation')
   }
   return message
 }
@@ -101,9 +108,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const fullName = input.fullName.trim()
       const email = normalizeEmail(input.email)
       const password = input.password.trim()
-      if (!fullName) return { ok: false, message: 'Doctor name is required.' }
-      if (!isValidEmail(email)) return { ok: false, message: 'Valid email is required.' }
-      if (password.length < 6) return { ok: false, message: 'Password must be at least 6 characters.' }
+      if (!fullName) return { ok: false, message: tr('auth.error.doctorNameRequired') }
+      if (!isValidEmail(email)) return { ok: false, message: tr('auth.error.validEmailRequired') }
+      if (password.length < 6) return { ok: false, message: tr('auth.error.passwordMin') }
 
       const doctorId = crypto.randomUUID()
       const { error: insertError } = await supabase.from('doctors').insert({
@@ -135,7 +142,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         await supabase.from('doctors').delete().eq('id', doctorId)
         return {
           ok: false,
-          message: 'Disable email confirmation in Supabase Auth to create doctor accounts instantly.',
+          message: tr('auth.error.disableEmailConfirmationInstant'),
         }
       }
 
@@ -149,7 +156,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const updateDoctor = useCallback(
     async (doctorId: string, patch: { fullName: string; isAdmin: boolean }): Promise<AuthActionResult> => {
       const normalized = patch.fullName.trim()
-      if (!normalized) return { ok: false, message: 'Name is required.' }
+      if (!normalized) return { ok: false, message: tr('auth.error.nameRequired') }
 
       const { error } = await supabase
         .from('doctors')
@@ -187,22 +194,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signInWithEmail = useCallback(
     async (emailInput: string, password: string): Promise<AuthActionResult> => {
       const email = normalizeEmail(emailInput)
-      if (!isValidEmail(email)) return { ok: false, message: 'Enter valid email.' }
+      if (!isValidEmail(email)) return { ok: false, message: tr('auth.error.enterValidEmail') }
       const normalizedPassword = password.trim()
-      if (normalizedPassword.length < 6) return { ok: false, message: 'Password is too short.' }
+      if (normalizedPassword.length < 6) return { ok: false, message: tr('auth.error.passwordTooShort') }
 
       let signInResult = await supabase.auth.signInWithPassword({
         email,
         password: normalizedPassword,
       })
       if (signInResult.error) {
-        const signInMessage = signInResult.error.message ?? 'Login failed.'
+        const signInMessage = signInResult.error.message ?? tr('auth.error.loginFailed')
         if (!isInvalidCredentialsMessage(signInMessage)) {
           return { ok: false, message: normalizeAuthMessage(signInMessage) }
         }
 
         const doctor = await loadDoctorByEmail(email)
-        if (!doctor) return { ok: false, message: 'Wrong email or password.' }
+        if (!doctor) return { ok: false, message: tr('auth.error.wrongCredentials') }
 
         const isolated = createIsolatedSupabaseClient()
         const signUpResult = await isolated.auth.signUp({
@@ -221,7 +228,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (!signUpResult.data.session) {
           return {
             ok: false,
-            message: 'Disable email confirmation in Supabase Auth settings.',
+            message: tr('auth.error.disableEmailConfirmation'),
           }
         }
         await isolated.auth.signOut()
@@ -238,7 +245,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const doctor = await resolveDoctor(activeUser)
       if (!doctor) {
         await supabase.auth.signOut()
-        return { ok: false, message: 'No doctor profile linked to this account.' }
+        return { ok: false, message: tr('auth.error.noDoctorProfile') }
       }
 
       if (activeUser && !doctorIdFromUser(activeUser)) {

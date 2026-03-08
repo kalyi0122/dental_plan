@@ -156,16 +156,16 @@ function seedPatients(): Patient[] {
   return [
     {
       id: nanoid(),
-      fullName: DEMO_PATIENTS[0].en.fullName,
-      phone: DEMO_PATIENTS[0].en.phone,
-      email: DEMO_PATIENTS[0].en.email,
+      fullName: DEMO_PATIENTS[0].ru.fullName,
+      phone: DEMO_PATIENTS[0].ru.phone,
+      email: DEMO_PATIENTS[0].ru.email,
       avatarColor: '#6ea8fe',
     },
     {
       id: nanoid(),
-      fullName: DEMO_PATIENTS[1].en.fullName,
-      phone: DEMO_PATIENTS[1].en.phone,
-      email: DEMO_PATIENTS[1].en.email,
+      fullName: DEMO_PATIENTS[1].ru.fullName,
+      phone: DEMO_PATIENTS[1].ru.phone,
+      email: DEMO_PATIENTS[1].ru.email,
       avatarColor: '#24c08a',
     },
   ]
@@ -197,8 +197,8 @@ function seedSettings(): Settings {
     numberingSystem: 'FDI',
     currency: 'EUR',
     theme: 'system',
-    locale: 'en',
-    quoteText: quoteTextByLocale.en,
+    locale: 'ru',
+    quoteText: quoteTextByLocale.ru,
   }
 }
 
