@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
-import { LogOut, Menu, ShieldCheck, Users, Wrench, X, Settings as SettingsIcon } from 'lucide-react'
+import { LogOut, ShieldCheck, Users, Wrench, X, Settings as SettingsIcon } from 'lucide-react'
 import { useAuth } from '../auth/useAuth'
 import { useAppStore } from '../store/useAppStore'
 import { useTranslation } from '../i18n/useTranslation'
@@ -94,13 +94,24 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }, [])
 
   return (
-    <div className="app-shell" style={styles.shellBase}>
+    <div className={`app-shell ${isMobileNavOpen ? 'nav-open' : ''}`} style={styles.shellBase}>
       <div
         className={`mobile-nav-backdrop ${isMobileNavOpen ? 'open' : ''}`}
         aria-hidden={!isMobileNavOpen}
         onClick={() => setIsMobileNavOpen(false)}
       />
       <aside className={`app-sidebar ${isMobileNavOpen ? 'open' : ''}`} style={styles.sidebar}>
+        <div className="mobile-drawer-head">
+          <div className="mobile-drawer-grab" />
+          <button
+            type="button"
+            className="mobile-drawer-close"
+            onClick={() => setIsMobileNavOpen(false)}
+            aria-label={t('common.closeMenu')}
+          >
+            <X size={16} />
+          </button>
+        </div>
         <div style={styles.brand}>
           <div style={styles.logo} aria-hidden>
             <MogulLogo />
@@ -133,25 +144,38 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           })}
         </nav>
 
-        <div style={styles.hint} className="muted">
+        <div style={styles.hint} className="sidebar-hint muted">
           {t('hint.search')}
+        </div>
+
+        <div className="sidebar-mobile-actions">
+          <div style={styles.userChip}>{userDoctor?.full_name ?? t('common.doctor')}</div>
+          <button type="button" style={styles.logoutButton} onClick={() => void signOut()}>
+            <LogOut size={15} />
+            {t('common.signOut')}
+          </button>
+          <LanguageSwitcher />
         </div>
       </aside>
 
       <main style={styles.main}>
         <div className="app-topbar" style={styles.topbar}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', flex: 1, minWidth: 0 }}>
+          <div className="topbar-left" style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', flex: 1, minWidth: 0 }}>
             <button
               type="button"
-              className="mobile-menu-btn"
+              className={`mobile-menu-btn ${isMobileNavOpen ? 'open' : ''}`}
               onClick={() => setIsMobileNavOpen((v) => !v)}
               aria-label={isMobileNavOpen ? t('common.closeMenu') : t('common.openMenu')}
               aria-expanded={isMobileNavOpen}
               aria-controls="app-navigation"
             >
-              {isMobileNavOpen ? <X size={18} /> : <Menu size={18} />}
+              <span className="mobile-menu-lines" aria-hidden>
+                <span />
+                <span />
+                <span />
+              </span>
             </button>
-            <div style={{ fontWeight: 600, fontSize: 15, letterSpacing: '0.01em' }}>
+            <div className="topbar-title" style={{ fontWeight: 600, fontSize: 15, letterSpacing: '0.01em' }}>
               {location.pathname.startsWith('/patients')
                 ? t('topbar.patients')
                 : location.pathname.startsWith('/services')
@@ -164,7 +188,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               {t('topbar.hint')}
             </div>
           </div>
-          <div className="topbar-language" style={styles.topbarActions}>
+          <div className="topbar-language topbar-actions-desktop" style={styles.topbarActions}>
             <div style={styles.userChip}>{userDoctor?.full_name ?? t('common.doctor')}</div>
             <button type="button" style={styles.logoutButton} onClick={() => void signOut()}>
               <LogOut size={15} />
