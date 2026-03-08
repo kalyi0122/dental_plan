@@ -102,6 +102,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     'common.cancel': 'Cancel',
     'common.signOut': 'Sign out',
     'common.doctor': 'Doctor',
+    'common.language': 'Language',
     'common.openMenu': 'Open menu',
     'common.closeMenu': 'Close menu',
 
@@ -296,6 +297,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     'common.cancel': 'Отмена',
     'common.signOut': 'Выйти',
     'common.doctor': 'Врач',
+    'common.language': 'Язык',
     'common.openMenu': 'Открыть меню',
     'common.closeMenu': 'Закрыть меню',
 
@@ -480,6 +482,11 @@ export const translations: Record<Locale, Record<string, string>> = {
     'settings.resetConfirm': 'Бардык маалыматты баштапкыга кайтарабы?',
     'settings.resetDemo': 'Демо маалыматты кайтаруу',
     'common.cancel': 'Жокко чыгаруу',
+    'common.signOut': 'Чыгуу',
+    'common.doctor': 'Дарыгер',
+    'common.language': 'Тил',
+    'common.openMenu': 'Меню ачуу',
+    'common.closeMenu': 'Меню жабуу',
 
     'chart.title': 'Тиш схемасы',
     'chart.hint': 'Чыкылдатуу — тиш тандалат • Shift — аралык',

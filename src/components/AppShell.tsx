@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 import { LogOut, ShieldCheck, Users, Wrench, X, Settings as SettingsIcon } from 'lucide-react'
 import { useAuth } from '../auth/useAuth'
@@ -43,6 +43,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const location = useLocation()
   const { t } = useTranslation()
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false)
+  const prevPathnameRef = useRef(location.pathname)
 
   const resolved = useMemo(() => resolveTheme(theme), [theme])
   const navItems = useMemo(
@@ -65,7 +66,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }, [theme])
 
   useEffect(() => {
-    if (!isMobileNavOpen) return
+    const routeChanged = prevPathnameRef.current !== location.pathname
+    prevPathnameRef.current = location.pathname
+    if (!routeChanged || !isMobileNavOpen) return
     const timeoutId = window.setTimeout(() => setIsMobileNavOpen(false), 0)
     return () => window.clearTimeout(timeoutId)
   }, [isMobileNavOpen, location.pathname])
@@ -161,6 +164,25 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <main style={styles.main}>
         <div className="app-topbar" style={styles.topbar}>
           <div className="topbar-left" style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', flex: 1, minWidth: 0 }}>
+            <div className="topbar-title" style={{ fontWeight: 600, fontSize: 15, letterSpacing: '0.01em' }}>
+              {location.pathname.startsWith('/patients')
+                ? t('topbar.patients')
+                : location.pathname.startsWith('/services')
+                  ? t('topbar.services')
+                  : location.pathname.startsWith('/admin')
+                    ? t('topbar.admin')
+                    : t('topbar.settings')}
+            </div>
+            <div className="muted topbar-subtitle" style={{ fontSize: 13 }}>
+              {t('topbar.hint')}
+            </div>
+          </div>
+          <div className="topbar-actions-main" style={styles.topbarActions}>
+            <button type="button" className="header-logout-btn" style={styles.logoutButton} onClick={() => void signOut()}>
+              <LogOut size={15} />
+              {t('common.signOut')}
+            </button>
+            <LanguageSwitcher />
             <button
               type="button"
               className={`mobile-menu-btn ${isMobileNavOpen ? 'open' : ''}`}
@@ -175,26 +197,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <span />
               </span>
             </button>
-            <div className="topbar-title" style={{ fontWeight: 600, fontSize: 15, letterSpacing: '0.01em' }}>
-              {location.pathname.startsWith('/patients')
-                ? t('topbar.patients')
-                : location.pathname.startsWith('/services')
-                  ? t('topbar.services')
-                  : location.pathname.startsWith('/admin')
-                    ? t('topbar.admin')
-                    : t('topbar.settings')}
-            </div>
-            <div className="muted topbar-subtitle" style={{ fontSize: 13 }}>
-              {t('topbar.hint')}
-            </div>
-          </div>
-          <div className="topbar-language topbar-actions-desktop" style={styles.topbarActions}>
-            <div style={styles.userChip}>{userDoctor?.full_name ?? t('common.doctor')}</div>
-            <button type="button" style={styles.logoutButton} onClick={() => void signOut()}>
-              <LogOut size={15} />
-              {t('common.signOut')}
-            </button>
-            <LanguageSwitcher />
           </div>
         </div>
         <div style={styles.content}>{children}</div>
