@@ -370,6 +370,30 @@ textarea:focus-visible {
   }
 }
 
+/* --- Auth screen --- */
+.auth-screen {
+  min-height: 100%;
+  display: grid;
+  place-items: center;
+  padding: var(--space-5);
+}
+.auth-grid {
+  width: min(960px, 100%);
+  display: grid;
+  gap: var(--space-5);
+  grid-template-columns: 1fr 1fr;
+}
+@media (max-width: 1023px) {
+  .auth-grid {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 639px) {
+  .auth-screen {
+    padding: var(--space-3);
+  }
+}
+
 /* --- Treatment planner: 3 steps --- */
 .layout-planner {
   display: grid;
