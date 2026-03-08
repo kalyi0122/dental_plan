@@ -1,15 +1,36 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
-import { Menu, Users, Wrench, X, Settings as SettingsIcon } from 'lucide-react'
+import { LogOut, ShieldCheck, Users, Wrench, X, Settings as SettingsIcon } from 'lucide-react'
+import { useAuth } from '../auth/useAuth'
 import { useAppStore } from '../store/useAppStore'
 import { useTranslation } from '../i18n/useTranslation'
 import { LanguageSwitcher } from './LanguageSwitcher'
 
-const navItems = [
+const defaultNavItems = [
   { to: '/patients', labelKey: 'nav.patients', icon: Users },
   { to: '/services', labelKey: 'nav.services', icon: Wrench },
   { to: '/settings', labelKey: 'nav.settings', icon: SettingsIcon },
 ]
+
+const adminNavItem = { to: '/admin/doctors', labelKey: 'nav.admin', icon: ShieldCheck }
+
+function MogulLogo() {
+  return (
+    <svg viewBox="0 0 40 40" width="30" height="30" aria-hidden="true">
+      <g opacity="0.85" stroke="#2D6DFF" strokeWidth="1.7" strokeLinecap="round">
+        <line x1="0.5" y1="11.5" x2="12" y2="11.5" />
+        <line x1="0" y1="15" x2="11" y2="15" />
+        <line x1="1" y1="18.5" x2="12.8" y2="18.5" />
+        <line x1="2" y1="22" x2="11.5" y2="22" />
+      </g>
+      <path
+        d="M9.6 21.5 C9.6 14.1 14.5 7.4 20.6 7.4 C22.9 7.4 24.4 8.3 25.6 9.7 C26.8 8.3 28.3 7.4 30.6 7.4 C36.7 7.4 41.6 14.1 41.6 21.5 L37.2 29 L33.6 25.7 H16.6 L13 29 Z"
+        fill="#246BFF"
+      />
+      <text x="25" y="24" textAnchor="middle" fill="#111111" fontSize="13.6" fontWeight="900">$</text>
+    </svg>
+  )
+}
 
 function resolveTheme(theme: 'system' | 'light' | 'dark') {
   if (theme === 'light' || theme === 'dark') return theme
@@ -18,11 +39,17 @@ function resolveTheme(theme: 'system' | 'light' | 'dark') {
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const theme = useAppStore((s) => s.settings.theme)
+  const { isAdmin, signOut, userDoctor } = useAuth()
   const location = useLocation()
   const { t } = useTranslation()
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false)
+  const prevPathnameRef = useRef(location.pathname)
 
   const resolved = useMemo(() => resolveTheme(theme), [theme])
+  const navItems = useMemo(
+    () => (isAdmin ? [...defaultNavItems, adminNavItem] : defaultNavItems),
+    [isAdmin],
+  )
 
   useEffect(() => {
     document.documentElement.dataset.theme = resolved
@@ -39,8 +66,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }, [theme])
 
   useEffect(() => {
-    setIsMobileNavOpen(false)
-  }, [location.pathname])
+    const routeChanged = prevPathnameRef.current !== location.pathname
+    prevPathnameRef.current = location.pathname
+    if (!routeChanged || !isMobileNavOpen) return
+    const timeoutId = window.setTimeout(() => setIsMobileNavOpen(false), 0)
+    return () => window.clearTimeout(timeoutId)
+  }, [isMobileNavOpen, location.pathname])
 
   useEffect(() => {
     if (!isMobileNavOpen) return
@@ -66,15 +97,28 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }, [])
 
   return (
-    <div className="app-shell" style={styles.shellBase}>
+    <div className={`app-shell ${isMobileNavOpen ? 'nav-open' : ''}`} style={styles.shellBase}>
       <div
         className={`mobile-nav-backdrop ${isMobileNavOpen ? 'open' : ''}`}
         aria-hidden={!isMobileNavOpen}
         onClick={() => setIsMobileNavOpen(false)}
       />
       <aside className={`app-sidebar ${isMobileNavOpen ? 'open' : ''}`} style={styles.sidebar}>
+        <div className="mobile-drawer-head">
+          <div className="mobile-drawer-grab" />
+          <button
+            type="button"
+            className="mobile-drawer-close"
+            onClick={() => setIsMobileNavOpen(false)}
+            aria-label={t('common.closeMenu')}
+          >
+            <X size={16} />
+          </button>
+        </div>
         <div style={styles.brand}>
-          <div style={styles.logo} aria-hidden />
+          <div style={styles.logo} aria-hidden>
+            <MogulLogo />
+          </div>
           <div>
             <div style={{ fontWeight: 700, letterSpacing: 0.2 }}>{t('app.title')}</div>
             <div style={{ fontSize: 12 }} className="muted">
@@ -103,37 +147,56 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           })}
         </nav>
 
-        <div style={styles.hint} className="muted">
+        <div style={styles.hint} className="sidebar-hint muted">
           {t('hint.search')}
+        </div>
+
+        <div className="sidebar-mobile-actions">
+          <div style={styles.userChip}>{userDoctor?.full_name ?? t('common.doctor')}</div>
+          <button type="button" style={styles.logoutButton} onClick={() => void signOut()}>
+            <LogOut size={15} />
+            {t('common.signOut')}
+          </button>
+          <LanguageSwitcher />
         </div>
       </aside>
 
       <main style={styles.main}>
         <div className="app-topbar" style={styles.topbar}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', flex: 1, minWidth: 0 }}>
-            <button
-              type="button"
-              className="mobile-menu-btn"
-              onClick={() => setIsMobileNavOpen((v) => !v)}
-              aria-label={isMobileNavOpen ? 'Close menu' : 'Open menu'}
-              aria-expanded={isMobileNavOpen}
-              aria-controls="app-navigation"
-            >
-              {isMobileNavOpen ? <X size={18} /> : <Menu size={18} />}
-            </button>
-            <div style={{ fontWeight: 600, fontSize: 15, letterSpacing: '0.01em' }}>
+          <div className="topbar-left" style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', flex: 1, minWidth: 0 }}>
+            <div className="topbar-title" style={{ fontWeight: 600, fontSize: 15, letterSpacing: '0.01em' }}>
               {location.pathname.startsWith('/patients')
                 ? t('topbar.patients')
                 : location.pathname.startsWith('/services')
                   ? t('topbar.services')
-                  : t('topbar.settings')}
+                  : location.pathname.startsWith('/admin')
+                    ? t('topbar.admin')
+                    : t('topbar.settings')}
             </div>
             <div className="muted topbar-subtitle" style={{ fontSize: 13 }}>
               {t('topbar.hint')}
             </div>
           </div>
-          <div className="topbar-language">
+          <div className="topbar-actions-main" style={styles.topbarActions}>
+            <button type="button" className="header-logout-btn" style={styles.logoutButton} onClick={() => void signOut()}>
+              <LogOut size={15} />
+              {t('common.signOut')}
+            </button>
             <LanguageSwitcher />
+            <button
+              type="button"
+              className={`mobile-menu-btn ${isMobileNavOpen ? 'open' : ''}`}
+              onClick={() => setIsMobileNavOpen((v) => !v)}
+              aria-label={isMobileNavOpen ? t('common.closeMenu') : t('common.openMenu')}
+              aria-expanded={isMobileNavOpen}
+              aria-controls="app-navigation"
+            >
+              <span className="mobile-menu-lines" aria-hidden>
+                <span />
+                <span />
+                <span />
+              </span>
+            </button>
           </div>
         </div>
         <div style={styles.content}>{children}</div>
@@ -173,9 +236,11 @@ const styles: Record<string, React.CSSProperties> = {
     height: 40,
     borderRadius: 'var(--radius-md)',
     background:
-      'radial-gradient(circle at 24% 24%, rgba(96,157,255,0.95), rgba(96,157,255,0.2) 58%), radial-gradient(circle at 74% 74%, rgba(31,202,150,0.72), transparent 66%)',
+      'linear-gradient(180deg, color-mix(in oklab, var(--panel2) 88%, transparent), color-mix(in oklab, var(--panel) 94%, black))',
     border: '1px solid var(--border)',
     boxShadow: '0 10px 24px rgba(3, 8, 20, 0.2)',
+    display: 'grid',
+    placeItems: 'center',
   },
   nav: {
     display: 'flex',
@@ -226,6 +291,35 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
+  },
+  topbarActions: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 'var(--space-2)',
+  },
+  userChip: {
+    border: '1px solid var(--border)',
+    borderRadius: 999,
+    padding: '4px 10px',
+    fontSize: 12,
+    background: 'color-mix(in oklab, var(--panel2) 82%, transparent)',
+    maxWidth: 180,
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
+  },
+  logoutButton: {
+    minHeight: 34,
+    borderRadius: 'var(--radius-md)',
+    border: '1px solid var(--border)',
+    background: 'color-mix(in oklab, var(--panel2) 82%, transparent)',
+    color: 'var(--text)',
+    cursor: 'pointer',
+    padding: '6px 10px',
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 6,
+    fontSize: 13,
   },
   content: {
     marginTop: 'var(--space-5)',

@@ -159,9 +159,17 @@ export function mapPlanToToothConditions(
     'tooth-root-canal',
     'tooth-veneer',
     'tooth-blue-block',
+    'tooth-bridge-x6',
+    'tooth-bridge-x7',
+    'tooth-blue-square',
     'tooth-blue-cap',
     'tooth-purple-cap',
     'tooth-blue-green-cap',
+    'tooth-black-cap',
+    'tooth-gold-fill',
+    'tooth-blue-fill',
+    'tooth-gray-fill',
+    'tooth-purple-canal',
   ])
 
   const crownWords = ['crown', '\u043a\u043e\u0440\u043e\u043d\u043a', '\u043a\u0430\u043f\u043f', 'prosthe', '\u0438\u043c\u043f\u043b\u0430\u043d\u0442']
@@ -177,7 +185,7 @@ export function mapPlanToToothConditions(
     '\u0434\u0435\u0441\u043d',
   ]
   const rootCanalWords = ['root canal', 'endo', '\u043a\u0430\u043d\u0430\u043b']
-  const crownIcons = new Set(['tooth-crown', 'tooth-blue-cap', 'tooth-purple-cap', 'implant'])
+  const crownIcons = new Set(['tooth-crown', 'tooth-blue-cap', 'tooth-purple-cap', 'tooth-black-cap', 'implant'])
   const fillingIcons = new Set([
     'tooth-filling',
     'tooth-pin',
@@ -185,20 +193,51 @@ export function mapPlanToToothConditions(
     'tooth-veneer',
     'tooth-blue-block',
     'tooth-blue-green-cap',
+    'tooth-gold-fill',
+    'tooth-blue-fill',
+    'tooth-gray-fill',
   ])
+  const upperBracesTeeth = Array.from({ length: 14 }, (_, i) => universalToFdi(String(i + 2))).filter(isValidFdiToothId)
+  const lowerBracesTeeth = Array.from({ length: 14 }, (_, i) => universalToFdi(String(i + 18))).filter(isValidFdiToothId)
+  const upperBridgeTeethX6 = ['16', '15', '14', '13', '12', '11', '21', '22', '23', '24', '25', '26']
+  const lowerBridgeTeethX6 = ['36', '35', '34', '33', '32', '31', '41', '42', '43', '44', '45', '46']
+  const upperBridgeTeethX7 = ['17', '16', '15', '14', '13', '12', '11', '21', '22', '23', '24', '25', '26', '27']
+  const lowerBridgeTeethX7 = ['37', '36', '35', '34', '33', '32', '31', '41', '42', '43', '44', '45', '46', '47']
 
   const result = new Map<string, ToothCondition>()
   plan.procedures.forEach((p) => {
-    if (p.scope !== 'TOOTH' || !p.toothIds) return
     const svc = serviceById.get(p.serviceId)
     const name = normalize(svc?.name)
     const rawIcon = normalize(svc?.icon)
     const icon = iconAlias[rawIcon] ?? rawIcon
+    const isJawBraces = p.scope === 'JAW' && icon === 'tooth-blue-block'
+    const isJawBridgeX6 = p.scope === 'JAW' && icon === 'tooth-bridge-x6'
+    const isJawBridgeX7 = p.scope === 'JAW' && icon === 'tooth-bridge-x7'
+    let targetToothIds: string[] = []
+
+    if (p.scope === 'TOOTH' && p.toothIds?.length) {
+      targetToothIds = p.toothIds
+    } else if (isJawBraces) {
+      if (p.jaw === 'MAXILLA') targetToothIds = upperBracesTeeth
+      else if (p.jaw === 'MANDIBLE') targetToothIds = lowerBracesTeeth
+      else targetToothIds = [...upperBracesTeeth, ...lowerBracesTeeth]
+    } else if (isJawBridgeX6) {
+      if (p.jaw === 'MAXILLA') targetToothIds = upperBridgeTeethX6
+      else if (p.jaw === 'MANDIBLE') targetToothIds = lowerBridgeTeethX6
+      else targetToothIds = [...upperBridgeTeethX6, ...lowerBridgeTeethX6]
+    } else if (isJawBridgeX7) {
+      if (p.jaw === 'MAXILLA') targetToothIds = upperBridgeTeethX7
+      else if (p.jaw === 'MANDIBLE') targetToothIds = lowerBridgeTeethX7
+      else targetToothIds = [...upperBridgeTeethX7, ...lowerBridgeTeethX7]
+    } else {
+      return
+    }
+
     const isCrown = crownIcons.has(icon) || hasAny(name, crownWords)
     const isExtraction = icon === 'tooth-extraction' || hasAny(name, extractionWords)
     const isFilling = fillingIcons.has(icon) || hasAny(name, fillingWords)
-    const isRootCanal = icon === 'tooth-root-canal' || hasAny(name, rootCanalWords)
-    p.toothIds.forEach((id) => {
+    const isRootCanal = icon === 'tooth-root-canal' || icon === 'tooth-purple-canal' || hasAny(name, rootCanalWords)
+    targetToothIds.forEach((id) => {
       const prev = result.get(id) || {}
       if (visualIcons.has(icon)) prev.visualIcon = icon
       if (isCrown) prev.hasCrown = true
@@ -228,7 +267,7 @@ export function buildDentalChartSvg(
   const cellW = 30
   const gap = 0
   const scale = 0.65 // zoom in teeth
-  const rowYUpper = 50
+  const rowYUpper = 88
   const rowYLower = 160
 
   const upper = FDI_TEETH.slice(0, 16)
@@ -257,7 +296,7 @@ export function buildDentalChartSvg(
       const isUp = t.startsWith('1') || t.startsWith('2')
 
       const lbl = toDisplayToothLabel(t, numberingSystem)
-      const labelY = isUp ? rowY - 40 : rowY + 50
+      const labelY = isUp ? rowY - 58 : rowY + 54
       svg += `<text x="${cx + cellW / 2}" y="${labelY}" font-family="Helvetica, Arial, sans-serif" font-size="14" font-weight="bold" fill="#111111" text-anchor="middle" dy="0.35em">${lbl}</text>`
 
       const paths = getToothPaths(t)
@@ -278,28 +317,35 @@ export function buildDentalChartSvg(
       let crownFill = '#ffffff'
       let crownStroke = '#111111'
       const visualIcon = cond?.visualIcon
+      const iconScale = 1.2
+      const pinScale = 1.3
+      const x6UpOffset = 0
+      const x6DownOffset = -10
 
       if (visualIcon === 'tooth-blue-cap') {
-        crownFill = '#1FA8E5'
-        crownStroke = '#1579A7'
+        crownFill = '#FFFFFF'
+        crownStroke = '#9CA3AF'
       } else if (visualIcon === 'tooth-purple-cap') {
-        crownFill = '#A447EF'
-        crownStroke = '#7E2FC4'
+        crownFill = '#FFFFFF'
+        crownStroke = '#9CA3AF'
+      } else if (visualIcon === 'tooth-black-cap') {
+        crownFill = '#FFFFFF'
+        crownStroke = '#9CA3AF'
       } else if (visualIcon === 'tooth-blue-green-cap') {
-        crownFill = '#1FA8E5'
-        crownStroke = '#1579A7'
-      } else if (visualIcon === 'tooth-inlay') {
-        crownFill = '#F9CE1D'
-        crownStroke = '#D6A700'
+        crownFill = '#FFFFFF'
+        crownStroke = '#9CA3AF'
       } else if (visualIcon === 'tooth-filling') {
-        crownFill = '#24E035'
-        crownStroke = '#1CAA2A'
+        crownFill = '#FFFFFF'
+        crownStroke = '#9CA3AF'
+      } else if (visualIcon === 'tooth-gold-fill' || visualIcon === 'tooth-blue-fill' || visualIcon === 'tooth-gray-fill') {
+        crownFill = '#FFFFFF'
+        crownStroke = '#9CA3AF'
       } else if (visualIcon === 'tooth-crown') {
-        crownFill = '#38A169'
-        crownStroke = '#25603B'
+        crownFill = '#FFFFFF'
+        crownStroke = '#9CA3AF'
       } else if (visualIcon === 'implant') {
-        crownFill = '#00B4D8'
-        crownStroke = '#02839E'
+        crownFill = '#FFFFFF'
+        crownStroke = '#9CA3AF'
       } else if (cond?.hasExtraction) {
         rootFill = '#111111'
         crownFill = '#ffffff'
@@ -319,21 +365,144 @@ export function buildDentalChartSvg(
         const rootCanalPath = isUp ? 'M0,-40 L0,5' : 'M0,40 L0,-5'
         svg += `<path class="tooth-root-canal" d="${rootCanalPath}" />`
       }
-      if (visualIcon === 'tooth-pin' && !cond?.hasExtraction) {
-        const pinY = isUp ? -22 : -2
-        svg += `<rect x="-1.6" y="${pinY}" width="3.2" height="24" rx="1.6" fill="#55D6FF" />`
-      }
       // crown
       svg += `<path class="tooth-crown" d="${paths.crown}" fill="${crownFill}" stroke="${crownStroke}" stroke-width="2.5" stroke-linejoin="round" />`
+      if (visualIcon === 'tooth-pin' && !cond?.hasExtraction) {
+        svg += `<g transform="scale(${iconScale})">`
+        if (isUp) {
+          svg += `<g transform="translate(0,7) scale(${pinScale},-${pinScale})">`
+          svg += `<rect x="-10.5" y="-4" width="21" height="9.2" rx="3" fill="#58A6FF" />`
+          svg += `<rect x="-3" y="4.2" width="6" height="17.2" rx="3" fill="#55D6FF" />`
+          svg += `</g>`
+        } else {
+          svg += `<g transform="translate(0,-3) scale(${pinScale})">`
+          svg += `<rect x="-10.5" y="-4" width="21" height="9.2" rx="3" fill="#58A6FF" />`
+          svg += `<rect x="-3" y="4.2" width="6" height="17.2" rx="3" fill="#55D6FF" />`
+          svg += `</g>`
+        }
+        svg += `</g>`
+      }
       if (visualIcon === 'tooth-blue-block' && !cond?.hasExtraction) {
-        svg += `<rect x="-6.5" y="${isUp ? 5.5 : -12.5}" width="13" height="13" fill="#72B6DF" />`
+        svg += `<g transform="scale(${iconScale})">`
+        svg += `<g transform="scale(1.55)">`
+        svg += `<rect x="-7.2" y="${isUp ? 0.6 : -9.6}" width="14.4" height="8.2" rx="1.1" fill="#4E86FF" />`
+        svg += `<rect x="-10.1" y="${isUp ? 2.3 : -7.9}" width="2.9" height="4.8" rx="0.7" fill="#3F78FF" />`
+        svg += `<rect x="7.2" y="${isUp ? 2.3 : -7.9}" width="2.9" height="4.8" rx="0.7" fill="#3F78FF" />`
+        svg += `<rect x="-5.1" y="${isUp ? 1.4 : -8.8}" width="10.2" height="0.9" rx="0.45" fill="rgba(255,255,255,0.3)" />`
+        svg += `</g>`
+        svg += `</g>`
+      }
+      if (visualIcon === 'tooth-bridge-x6' && !cond?.hasExtraction) {
+        svg += `<g transform="scale(${iconScale})">`
+        svg += `<g transform="translate(0,${isUp ? x6UpOffset : x6DownOffset}) scale(1.9)">`
+        svg += `<rect x="-11" y="${isUp ? -9.2 : 13.8}" width="22" height="4.2" rx="0.8" fill="#EAB6BE" />`
+        svg += `<path d="${isUp ? 'M-9,3 C-7,0 -3,-1 0,1.8 C3,-1 7,0 9,3 L7,12.5 C5,15.2 3.2,14.7 0,13 C-3.2,14.7 -5,15.2 -7,12.5 Z' : 'M-9,-3 C-7,0 -3,1 0,-1.8 C3,1 7,0 9,-3 L7,-12.5 C5,-15.2 3.2,-14.7 0,-13 C-3.2,-14.7 -5,-15.2 -7,-12.5 Z'}" fill="#1FA8E5" stroke="#1579A7" stroke-width="1.2" stroke-linejoin="round"${isUp ? '' : ' transform="translate(0,5)"'} />`
+          svg += `<g transform="translate(0,${isUp ? -12 : 15})"><path d="${isUp ? 'M-8.5,14.5 Q0,22 8.5,14.5 Q0,31 -8.5,14.5' : 'M-8.5,-14.5 Q0,-22 8.5,-14.5 Q0,-31 -8.5,-14.5'}" fill="#34E33C" stroke="#24C92D" stroke-width="0.95" /></g>`
+        svg += `</g>`
+        svg += `</g>`
+      }
+      if (visualIcon === 'tooth-bridge-x7' && !cond?.hasExtraction) {
+        svg += `<g transform="scale(${iconScale})">`
+        svg += `<g transform="translate(0,${isUp ? x6UpOffset : x6DownOffset}) scale(1.9)">`
+        svg += `<rect x="-11" y="${isUp ? -9.2 : 13.8}" width="22" height="4.2" rx="0.8" fill="#EAB6BE" />`
+        svg += `<path d="${isUp ? 'M-9,3 C-7,0 -3,-1 0,1.8 C3,-1 7,0 9,3 L7,12.5 C5,15.2 3.2,14.7 0,13 C-3.2,14.7 -5,15.2 -7,12.5 Z' : 'M-9,-3 C-7,0 -3,1 0,-1.8 C3,1 7,0 9,-3 L7,-12.5 C5,-15.2 3.2,-14.7 0,-13 C-3.2,-14.7 -5,-15.2 -7,-12.5 Z'}" fill="#1FA8E5" stroke="#1579A7" stroke-width="1.2" stroke-linejoin="round"${isUp ? '' : ' transform="translate(0,5)"'} />`
+          svg += `<g transform="translate(0,${isUp ? -12 : 15})"><path d="${isUp ? 'M-8.5,14.5 Q0,22 8.5,14.5 Q0,31 -8.5,14.5' : 'M-8.5,-14.5 Q0,-22 8.5,-14.5 Q0,-31 -8.5,-14.5'}" fill="#34E33C" stroke="#24C92D" stroke-width="0.95" /></g>`
+        svg += `</g>`
+        svg += `</g>`
+      }
+      if (visualIcon === 'tooth-blue-square' && !cond?.hasExtraction) {
+        svg += `<g transform="scale(${iconScale})">`
+        svg += `<rect x="-2.5" y="${isUp ? 1 : -13.5}" width="15" height="15" fill="#74B7DD" />`
+        svg += `</g>`
+      }
+      if (visualIcon === 'implant' && !cond?.hasExtraction) {
+        svg += `<g transform="scale(${iconScale})">`
+        svg += `<g transform="${isUp ? 'translate(0,-26) scale(2.45,-2.45)' : 'translate(0,27) scale(2.45)'}">`
+        svg += `<path d="M-7 -10 H7 V-7 H-7 Z" fill="#00B4D8" />`
+        svg += `<path d="M-6 -6 H6 L4.5 -3 H-4.5 Z" fill="#00B4D8" />`
+        svg += `<path d="M-5.5 -2 H5.5 L4 1 H-4 Z" fill="#00B4D8" />`
+        svg += `<path d="M-4.5 2 H4.5 L3 5 H-3 Z" fill="#00B4D8" />`
+        svg += `<path d="M-3.5 6 H3.5 L2 9 H-2 Z" fill="#00B4D8" />`
+        svg += `</g>`
+        svg += `</g>`
+      }
+      if (visualIcon === 'tooth-crown' && !cond?.hasExtraction) {
+        svg += `<g transform="scale(${iconScale})">`
+        svg += `<g transform="scale(1.9)">`
+        svg += `<path d="${isUp ? 'M-9,3 C-7,0 -3,-1 0,1.6 C3,-1 7,0 9,3 L7,12 C5,14.8 3.2,14.4 0,12.8 C-3.2,14.4 -5,14.8 -7,12 Z' : 'M-9,-3 C-7,0 -3,1 0,-1.6 C3,1 7,0 9,-3 L7,-12 C5,-14.8 3.2,-14.4 0,-12.8 C-3.2,-14.4 -5,-14.8 -7,-12 Z'}" fill="#38A169" stroke="#25603B" stroke-width="1.3" stroke-linejoin="round" />`
+        svg += `</g>`
+        svg += `</g>`
+      }
+      if (visualIcon === 'tooth-inlay' && !cond?.hasExtraction) {
+        const inlayPath = isUp
+          ? 'M-11,-20 Q0,-26 11,-20 L11,-10 L-11,-10 Z'
+          : 'M-11,20 Q0,26 11,20 L11,10 L-11,10 Z'
+        svg += `<g transform="scale(${iconScale})">`
+        svg += `<g transform="scale(2)">`
+        svg += `<path d="${inlayPath}" fill="#F9CE1D" stroke="#D6A700" stroke-width="0.78" stroke-linejoin="round" />`
+        svg += `</g>`
+        svg += `</g>`
+      }
+      if (visualIcon === 'tooth-purple-cap' && !cond?.hasExtraction) {
+        const capPath = isUp
+          ? 'M-14.8,2.4 C-10.5,-2.2 -5.2,-3.7 0,0.8 C5.2,-3.7 10.5,-2.2 14.8,2.4 L12.3,20 C9.1,25.2 5.2,23.3 0,20 C-5.2,23.3 -9.1,25.2 -12.3,20 Z'
+          : 'M-14.8,0.2 C-10.5,4.8 -5.2,6.3 0,1.8 C5.2,6.3 10.5,4.8 14.8,0.2 L12.3,-17.4 C9.1,-22.6 5.2,-20.7 0,-17.4 C-5.2,-20.7 -9.1,-22.6 -12.3,-17.4 Z'
+        svg += `<g transform="scale(${iconScale})">`
+        svg += `<g transform="translate(0,2.2) scale(1.15)">`
+        svg += `<path d="${capPath}" fill="#A447EF" stroke="#7E2FC4" stroke-width="2.4" stroke-linejoin="round" />`
+        svg += `</g>`
+        svg += `</g>`
+      }
+      if (visualIcon === 'tooth-black-cap' && !cond?.hasExtraction) {
+        const capPath = isUp
+          ? 'M-9,3 C-7,0 -3,-1 0,1.8 C3,-1 7,0 9,3 L7,12.5 C5,15.2 3.2,14.7 0,13 C-3.2,14.7 -5,15.2 -7,12.5 Z'
+          : 'M-9,-3 C-7,0 -3,1 0,-1.8 C3,1 7,0 9,-3 L7,-12.5 C5,-15.2 3.2,-14.7 0,-13 C-3.2,-14.7 -5,-15.2 -7,-12.5 Z'
+        svg += `<g transform="scale(${iconScale})">`
+        svg += `<g transform="scale(1.9)">`
+        svg += `<path d="${capPath}" fill="#1F2937" stroke="#111827" stroke-width="1.2" stroke-linejoin="round" />`
+        svg += `</g>`
+        svg += `</g>`
       }
       if (visualIcon === 'tooth-veneer' && !cond?.hasExtraction) {
-        svg += `<rect x="-9" y="${isUp ? 8.5 : -14.5}" width="18" height="5.5" rx="1.2" fill="#24E035" />`
+        svg += `<g transform="scale(${iconScale})">`
+        svg += `<rect x="-25" y="${isUp ? -37 : 23.5}" width="75" height="25" rx="3.8" fill="#24E035" />`
+        svg += `</g>`
+      }
+      if (visualIcon === 'tooth-blue-cap' && !cond?.hasExtraction) {
+        svg += `<g transform="scale(${iconScale})">`
+        svg += `<g transform="scale(1.9)">`
+        svg += `<path d="${isUp ? 'M-9,3 C-7,0 -3,-1 0,1.8 C3,-1 7,0 9,3 L7,12.5 C5,15.2 3.2,14.7 0,13 C-3.2,14.7 -5,15.2 -7,12.5 Z' : 'M-9,-3 C-7,0 -3,1 0,-1.8 C3,1 7,0 9,-3 L7,-12.5 C5,-15.2 3.2,-14.7 0,-13 C-3.2,-14.7 -5,-15.2 -7,-12.5 Z'}" fill="#1FA8E5" stroke="#1579A7" stroke-width="1.2" stroke-linejoin="round" />`
+        svg += `</g>`
+        svg += `</g>`
+      }
+      if (visualIcon === 'tooth-filling' && !cond?.hasExtraction) {
+        svg += `<g transform="scale(${iconScale})">`
+        svg += `<g transform="scale(1.55)">`
+        svg += `<rect x="-6" y="${isUp ? 8 : -14}" width="12" height="8.5" rx="2" fill="#24E035" stroke="#1CAA2A" stroke-width="1" />`
+        svg += `</g>`
+        svg += `</g>`
+      }
+      if ((visualIcon === 'tooth-gold-fill' || visualIcon === 'tooth-blue-fill' || visualIcon === 'tooth-gray-fill') && !cond?.hasExtraction) {
+        const fill = visualIcon === 'tooth-gold-fill' ? '#FACC15' : visualIcon === 'tooth-blue-fill' ? '#38BDF8' : '#9CA3AF'
+        const stroke = visualIcon === 'tooth-gold-fill' ? '#CA8A04' : visualIcon === 'tooth-blue-fill' ? '#0284C7' : '#6B7280'
+        svg += `<g transform="scale(${iconScale})">`
+        svg += `<g transform="scale(1.8)">`
+        svg += `<ellipse cx="0" cy="${isUp ? 9.5 : -9.5}" rx="5.2" ry="3.3" fill="${fill}" stroke="${stroke}" stroke-width="0.9" />`
+        svg += `</g>`
+        svg += `</g>`
       }
       if (visualIcon === 'tooth-blue-green-cap' && !cond?.hasExtraction) {
-        const inner = isUp ? 'M-7,12 Q0,18 7,12 Q0,26 -7,12' : 'M-7,-12 Q0,-18 7,-12 Q0,-26 -7,-12'
-        svg += `<path d="${inner}" fill="#34E33C" stroke="#24C92D" stroke-width="1.4" />`
+        const inner = isUp ? 'M-8.5,14.5 Q0,22 8.5,14.5 Q0,31 -8.5,14.5' : 'M-8.5,-14.5 Q0,-22 8.5,-14.5 Q0,-31 -8.5,-14.5'
+        svg += `<g transform="scale(${iconScale})">`
+        svg += `<g transform="scale(1.9)">`
+        svg += `<path d="${isUp ? 'M-9,3 C-7,0 -3,-1 0,1.8 C3,-1 7,0 9,3 L7,12.5 C5,15.2 3.2,14.7 0,13 C-3.2,14.7 -5,15.2 -7,12.5 Z' : 'M-9,-3 C-7,0 -3,1 0,-1.8 C3,1 7,0 9,-3 L7,-12.5 C5,-15.2 3.2,-14.7 0,-13 C-3.2,-14.7 -5,-15.2 -7,-12.5 Z'}" fill="#1FA8E5" stroke="#1579A7" stroke-width="1.2" stroke-linejoin="round"${isUp ? '' : ' transform="translate(0,5)"'} />`
+        svg += `<g transform="translate(0,${isUp ? -12 : 15})"><path d="${inner}" fill="#34E33C" stroke="#24C92D" stroke-width="0.95" /></g>`
+        svg += `</g>`
+        svg += `</g>`
+      }
+      if (visualIcon === 'tooth-purple-canal' && !cond?.hasExtraction) {
+        const rootCanalPath = isUp ? 'M0,-40 L0,5' : 'M0,40 L0,-5'
+        svg += `<path class="tooth-root-canal" d="${rootCanalPath}" />`
       }
       if (cond?.hasCrown && !cond?.hasExtraction && !visualIcon) {
         const capPath = isUp ? 'M-10,-2 Q0,-10 10,-2' : 'M-10,2 Q0,10 10,2'

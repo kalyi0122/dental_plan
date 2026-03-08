@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Plus, Search, Trash2 } from 'lucide-react'
 import { useAppStore } from '../store/useAppStore'
 import { useTranslation } from '../i18n/useTranslation'
 import { formatMoney } from '../domain/money'
 import type { JawRegion, ServiceCategory } from '../domain/types'
-import { Icon, ICON_LABELS, ICON_OPTIONS } from '../components/Icon'
+import { getLocalizedServiceName } from '../domain/serviceNames'
+import { Icon, ICON_OPTIONS } from '../components/Icon'
 import { Button, Card, Input, Pill, Select } from '../components/ui'
 
 const CATEGORY_OPTIONS: { value: ServiceCategory; labelKey: string }[] = [
@@ -12,15 +13,32 @@ const CATEGORY_OPTIONS: { value: ServiceCategory; labelKey: string }[] = [
   { value: 'JAW', labelKey: 'services.jawSpecific' },
   { value: 'GENERAL', labelKey: 'services.general' },
 ]
-
+const LIST_TABS: ServiceCategory[] = ['TOOTH', 'JAW', 'GENERAL']
+const JAW_ICON_OPTIONS = ['tooth-blue-block', 'tooth-bridge-x6', 'tooth-bridge-x7']
+const GENERAL_ICON_OPTIONS = ['consultation', 'photos', 'xray', 'planning']
+const TOOTH_ICON_OPTIONS = ICON_OPTIONS.filter((opt) => !JAW_ICON_OPTIONS.includes(opt))
+const GENERAL_DEFAULT_ICON = 'consultation'
+const JAW_DEFAULT_SERVICES: { icon: string; name: string; jawRegion: JawRegion }[] = [
+  { icon: 'tooth-blue-block', name: 'Брекеты', jawRegion: 'BOTH' },
+  { icon: 'tooth-bridge-x6', name: 'Винир x6', jawRegion: 'BOTH' },
+  { icon: 'tooth-bridge-x7', name: 'Винир x7', jawRegion: 'BOTH' },
+]
+const TOOTH_DEFAULT_SERVICES: { icon: string; name: string }[] = [
+  { icon: 'tooth-black-cap', name: 'Black crown' },
+  { icon: 'tooth-gold-fill', name: 'Gold filling' },
+  { icon: 'tooth-blue-fill', name: 'Blue filling' },
+  { icon: 'tooth-gray-fill', name: 'Gray filling' },
+  { icon: 'tooth-purple-canal', name: 'Root canal (purple)' },
+]
 export function ServicesPage() {
-  const { t } = useTranslation()
+  const { t, locale } = useTranslation()
   const services = useAppStore((s) => s.services)
   const upsertService = useAppStore((s) => s.upsertService)
   const removeService = useAppStore((s) => s.removeService)
   const currency = useAppStore((s) => s.settings.currency)
 
   const [q, setQ] = useState('')
+  const [listCategory, setListCategory] = useState<ServiceCategory>('TOOTH')
   const [category, setCategory] = useState<ServiceCategory>('TOOTH')
   const [name, setName] = useState('')
   const [icon, setIcon] = useState('tooth-pin')
@@ -29,17 +47,23 @@ export function ServicesPage() {
   const [price, setPrice] = useState('120')
   const iconMenuRef = useRef<HTMLDivElement | null>(null)
 
+  const serviceDisplayName = useCallback(
+    (s: { name: string; icon: string }) => getLocalizedServiceName(s, locale),
+    [locale],
+  )
+
   const filtered = useMemo(() => {
     const query = q.trim().toLowerCase()
     if (!query) return services
-    return services.filter((s) => `${s.name} ${s.category}`.toLowerCase().includes(query))
-  }, [services, q])
+    return services.filter((s) => `${s.name} ${serviceDisplayName(s)} ${s.category}`.toLowerCase().includes(query))
+  }, [services, q, serviceDisplayName])
 
-  const grouped = useMemo(() => {
-    const groups: Record<ServiceCategory, typeof filtered> = { TOOTH: [], JAW: [], GENERAL: [] }
-    filtered.forEach((s) => groups[s.category].push(s))
-    return groups
-  }, [filtered])
+  const visibleServices = useMemo(() => filtered.filter((s) => s.category === listCategory), [filtered, listCategory])
+  const iconOptions = useMemo(() => {
+    if (listCategory === 'JAW') return JAW_ICON_OPTIONS
+    if (listCategory === 'GENERAL') return GENERAL_ICON_OPTIONS
+    return TOOTH_ICON_OPTIONS
+  }, [listCategory])
 
   useEffect(() => {
     if (!iconMenuOpen) return
@@ -58,10 +82,43 @@ export function ServicesPage() {
     }
   }, [iconMenuOpen])
 
+  const resolvedIcon = iconOptions.includes(icon) ? icon : (iconOptions[0] ?? 'tooth-pin')
+
+  useEffect(() => {
+    const hasJawServices = services.some((s) => s.category === 'JAW')
+    if (hasJawServices) return
+    JAW_DEFAULT_SERVICES.forEach((item) => {
+      upsertService({
+        category: 'JAW',
+        icon: item.icon,
+        name: item.name,
+        priceCents: 12000,
+        jawRegion: item.jawRegion,
+      })
+    })
+  }, [services, upsertService])
+  useEffect(() => {
+    const existingToothIcons = new Set(services.filter((s) => s.category === 'TOOTH').map((s) => s.icon))
+    const missingDefaults = TOOTH_DEFAULT_SERVICES.filter((item) => !existingToothIcons.has(item.icon))
+    if (missingDefaults.length === 0) return
+    missingDefaults.forEach((item) => {
+      upsertService({
+        category: 'TOOTH',
+        icon: item.icon,
+        name: item.name,
+        priceCents: 12000,
+      })
+    })
+  }, [services, upsertService])
+
   const jawLabel = (jaw?: JawRegion) => {
     if (jaw === 'MANDIBLE') return t('planner.mandible')
     if (jaw === 'BOTH') return t('planner.bothJaws')
     return t('planner.maxilla')
+  }
+
+  const iconLabel = (iconName: string) => {
+    return getLocalizedServiceName({ name: iconName, icon: iconName }, locale)
   }
 
   return (
@@ -84,51 +141,81 @@ export function ServicesPage() {
         }
       >
         <div style={{ display: 'grid', gap: 'var(--space-4)' }}>
-          {CATEGORY_OPTIONS.map((cat) => (
-            <div key={cat.value}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 'var(--space-2)' }}>
-                <div style={{ fontWeight: 700 }}>{t(cat.labelKey)}</div>
-                <Pill>{grouped[cat.value].length}</Pill>
+          <div style={styles.listTabs}>
+            {LIST_TABS.map((tab) => {
+              const active = listCategory === tab
+              return (
+                <button
+                  key={tab}
+                  type="button"
+                  onClick={() => {
+                    setListCategory(tab)
+                    setCategory(tab)
+                    setIconMenuOpen(false)
+                  }}
+                  style={{
+                    ...styles.listTab,
+                    ...(tab === 'GENERAL' ? styles.listTabSeparated : null),
+                    ...(active ? styles.listTabActive : null),
+                  }}
+                >
+                  {t(tab === 'TOOTH' ? 'services.toothSpecific' : tab === 'JAW' ? 'services.jawSpecific' : 'services.general')}
+                </button>
+              )
+            })}
+          </div>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 'var(--space-2)' }}>
+              <div style={{ fontWeight: 700 }}>
+                {t(listCategory === 'TOOTH' ? 'services.toothSpecific' : listCategory === 'JAW' ? 'services.jawSpecific' : 'services.general')}
               </div>
-              <div style={{ display: 'grid', gap: 'var(--space-2)' }}>
-                {grouped[cat.value].map((s) => (
-                  <div key={s.id} className="row-service">
+              <Pill>{visibleServices.length}</Pill>
+            </div>
+            <div className="service-list" style={{ display: 'grid', gap: 'var(--space-2)' }}>
+              {visibleServices.map((s) => (
+                <div
+                  key={s.id}
+                  className={`row-service service-list-row ${s.category === 'GENERAL' ? 'service-list-row-general' : ''}`}
+                >
+                  {s.category !== 'GENERAL' ? (
                     <div className="row-icon" style={styles.iconWrap} aria-hidden>
                       <Icon name={s.icon} size={24} />
                     </div>
-                    <div className="row-main" style={{ minWidth: 0 }}>
-                      <div style={{ fontWeight: 650 }}>{s.name}</div>
-                      <div className="muted" style={{ fontSize: 13 }}>
-                        {formatMoney(s.priceCents, currency)}
-                      </div>
-                      {s.category === 'JAW' ? (
-                        <div className="muted" style={{ fontSize: 12 }}>
-                          {t('planner.jaw')}: {jawLabel(s.jawRegion)}
-                        </div>
-                      ) : null}
+                  ) : null}
+                  <div className="row-main" style={{ minWidth: 0 }}>
+                      <div style={{ fontWeight: 650 }}>{serviceDisplayName(s)}</div>
+                    <div className="muted" style={{ fontSize: 13 }}>
+                      {formatMoney(s.priceCents, currency)}
                     </div>
-                    <div className="row-actions">
-                      <Button
-                        title={t('services.deleteService')}
+                    {s.category === 'JAW' ? (
+                      <div className="muted" style={{ fontSize: 12 }}>
+                        {t('planner.jaw')}: {jawLabel(s.jawRegion)}
+                      </div>
+                    ) : null}
+                  </div>
+                  <div className="row-actions">
+                    <Button
+                      className="service-delete-btn"
+                      title={t('services.deleteService')}
+                      variant="danger"
                       onClick={() => {
-                        if (!confirm(t('services.deleteConfirm', { name: s.name })))
+                        if (!confirm(t('services.deleteConfirm', { name: serviceDisplayName(s) })))
                           return
                         removeService(s.id)
                       }}
                     >
                       <Trash2 size={16} />
-                      </Button>
-                    </div>
+                    </Button>
                   </div>
-                ))}
-                {grouped[cat.value].length === 0 && (
-                  <div className="muted" style={{ fontSize: 13, padding: 'var(--space-3)', border: '1px dashed var(--border)', borderRadius: 'var(--radius-md)' }}>
-                    {t('services.noInCategory')}
-                  </div>
-                )}
-              </div>
+                </div>
+              ))}
+              {visibleServices.length === 0 && (
+                <div className="muted" style={{ fontSize: 13, padding: 'var(--space-3)', border: '1px dashed var(--border)', borderRadius: 'var(--radius-md)' }}>
+                  {t('services.noInCategory')}
+                </div>
+              )}
             </div>
-          ))}
+          </div>
         </div>
       </Card>
 
@@ -138,7 +225,11 @@ export function ServicesPage() {
             <div style={styles.label}>{t('services.category')}</div>
             <Select
               value={category}
-              onChange={(v) => setCategory(v as ServiceCategory)}
+              onChange={(v) => {
+                const next = v as ServiceCategory
+                setCategory(next)
+                setListCategory(next)
+              }}
               options={CATEGORY_OPTIONS.map((c) => ({ value: c.value, label: t(c.labelKey) }))}
             />
           </div>
@@ -160,8 +251,9 @@ export function ServicesPage() {
               />
             </div>
           ) : null}
-          <div className="add-service-row">
-            <div>
+          <div className="add-service-row" style={category === 'GENERAL' ? { gridTemplateColumns: '1fr' } : undefined}>
+            {category !== 'GENERAL' ? (
+              <div>
               <div style={styles.label}>{t('services.icon')}</div>
               <div ref={iconMenuRef} style={{ position: 'relative' }}>
                 <button
@@ -173,17 +265,17 @@ export function ServicesPage() {
                 >
                   <span style={styles.iconPickerLeft}>
                     <span style={styles.iconPickerMini}>
-                      <Icon name={icon} size={22} />
+                      <Icon name={resolvedIcon} size={22} />
                     </span>
-                    <span>{ICON_LABELS[icon] ?? icon}</span>
+                    <span>{iconLabel(resolvedIcon)}</span>
                   </span>
                   <span style={{ opacity: 0.7 }}>▾</span>
                 </button>
 
                 {iconMenuOpen ? (
                   <div style={styles.iconPickerMenu} role="listbox">
-                    {ICON_OPTIONS.map((opt) => {
-                      const active = icon === opt
+                    {iconOptions.map((opt) => {
+                      const active = resolvedIcon === opt
                       return (
                         <button
                           key={opt}
@@ -202,14 +294,15 @@ export function ServicesPage() {
                           <span style={styles.iconPickerMini}>
                             <Icon name={opt} size={22} />
                           </span>
-                          <span>{ICON_LABELS[opt] ?? opt}</span>
+                          <span>{iconLabel(opt)}</span>
                         </button>
                       )
                     })}
                   </div>
                 ) : null}
               </div>
-            </div>
+              </div>
+            ) : null}
             <div>
               <div style={styles.label}>{t('services.price')}</div>
               <Input value={price} onChange={(e) => setPrice(e.target.value)} inputMode="decimal" />
@@ -217,11 +310,13 @@ export function ServicesPage() {
           </div>
 
           <div style={{ display: 'flex', gap: 'var(--space-4)', alignItems: 'center' }}>
-            <div style={{ ...styles.iconWrap, width: 44, height: 44 }}>
-              <Icon name={icon} size={26} />
-            </div>
+            {category !== 'GENERAL' ? (
+              <div style={{ ...styles.iconWrap, width: 44, height: 44 }}>
+                <Icon name={resolvedIcon} size={26} />
+              </div>
+            ) : null}
             <div style={{ minWidth: 0 }}>
-              <div style={{ fontWeight: 650 }}>{name.trim() || t('services.preview')}</div>
+              <div style={{ fontWeight: 650 }}>{name.trim() || iconLabel(resolvedIcon)}</div>
               <div className="muted" style={{ fontSize: 13 }}>
                 {formatMoney(Math.round((Number(price) || 0) * 100), currency)}
               </div>
@@ -241,7 +336,7 @@ export function ServicesPage() {
               if (!n || !Number.isFinite(p)) return
               upsertService({
                 category,
-                icon,
+                icon: category === 'GENERAL' ? GENERAL_DEFAULT_ICON : resolvedIcon,
                 name: n,
                 priceCents: Math.round(p * 100),
                 jawRegion: category === 'JAW' ? jawRegion : undefined,
@@ -256,7 +351,7 @@ export function ServicesPage() {
           </Button>
 
           <div className="muted" style={{ fontSize: 12 }}>
-            Recommended: keep names consistent (e.g. “Crown – Zirconia”, “Crown – Metal ceramic”).
+            {t('services.recommended')}
           </div>
         </div>
       </Card>
@@ -265,6 +360,33 @@ export function ServicesPage() {
 }
 
 const styles: Record<string, React.CSSProperties> = {
+  listTabs: {
+    display: 'inline-flex',
+    gap: 8,
+    padding: 4,
+    borderRadius: 12,
+    border: '1px solid var(--border)',
+    background: 'color-mix(in oklab, var(--panel2) 86%, transparent)',
+  },
+  listTab: {
+    borderRadius: 10,
+    border: '1px solid transparent',
+    background: 'transparent',
+    color: 'var(--muted)',
+    padding: '8px 12px',
+    fontSize: 13,
+    fontWeight: 650,
+    cursor: 'pointer',
+  },
+  listTabSeparated: {
+    marginLeft: 14,
+  },
+  listTabActive: {
+    color: 'white',
+    border: '1px solid color-mix(in oklab, var(--primary) 50%, var(--border))',
+    background:
+      'linear-gradient(180deg, color-mix(in oklab, var(--primary) 92%, white), color-mix(in oklab, var(--primary) 92%, #1142a2))',
+  },
   iconWrap: {
     width: 44,
     height: 44,
@@ -346,4 +468,13 @@ const styles: Record<string, React.CSSProperties> = {
     background: 'color-mix(in oklab, var(--primary) 16%, var(--panel))',
   },
 }
+
+
+
+
+
+
+
+
+
 
