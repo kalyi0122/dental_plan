@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+﻿import { useEffect, useMemo, useRef, useState } from 'react'
 import { Plus, Search, Trash2 } from 'lucide-react'
 import { useAppStore } from '../store/useAppStore'
 import { useTranslation } from '../i18n/useTranslation'
@@ -19,9 +19,9 @@ const GENERAL_ICON_OPTIONS = ['consultation', 'photos', 'xray', 'planning']
 const TOOTH_ICON_OPTIONS = ICON_OPTIONS.filter((opt) => !JAW_ICON_OPTIONS.includes(opt))
 const GENERAL_DEFAULT_ICON = 'consultation'
 const JAW_DEFAULT_SERVICES: { icon: string; name: string; jawRegion: JawRegion }[] = [
-  { icon: 'tooth-blue-block', name: 'Брекеты', jawRegion: 'BOTH' },
-  { icon: 'tooth-bridge-x6', name: 'Винир x6', jawRegion: 'BOTH' },
-  { icon: 'tooth-bridge-x7', name: 'Винир x7', jawRegion: 'BOTH' },
+  { icon: 'tooth-blue-block', name: 'Р‘СЂРµРєРµС‚С‹', jawRegion: 'BOTH' },
+  { icon: 'tooth-bridge-x6', name: 'Р’РёРЅРёСЂ x6', jawRegion: 'BOTH' },
+  { icon: 'tooth-bridge-x7', name: 'Р’РёРЅРёСЂ x7', jawRegion: 'BOTH' },
 ]
 const TOOTH_DEFAULT_SERVICES: { icon: string; name: string }[] = [
   { icon: 'tooth-black-cap', name: 'Black crown' },
@@ -47,16 +47,13 @@ export function ServicesPage() {
   const [price, setPrice] = useState('120')
   const iconMenuRef = useRef<HTMLDivElement | null>(null)
 
-  const serviceDisplayName = useCallback(
-    (s: { name: string; icon: string }) => getLocalizedServiceName(s, locale),
-    [locale],
-  )
+  const serviceDisplayName = (s: { name: string; icon: string }) => getLocalizedServiceName(s, locale)
 
   const filtered = useMemo(() => {
     const query = q.trim().toLowerCase()
     if (!query) return services
     return services.filter((s) => `${s.name} ${serviceDisplayName(s)} ${s.category}`.toLowerCase().includes(query))
-  }, [services, q, serviceDisplayName])
+  }, [services, q, locale])
 
   const visibleServices = useMemo(() => filtered.filter((s) => s.category === listCategory), [filtered, listCategory])
   const iconOptions = useMemo(() => {
@@ -82,7 +79,9 @@ export function ServicesPage() {
     }
   }, [iconMenuOpen])
 
-  const resolvedIcon = iconOptions.includes(icon) ? icon : (iconOptions[0] ?? 'tooth-pin')
+  useEffect(() => {
+    if (!iconOptions.includes(icon)) setIcon(iconOptions[0] ?? 'tooth-pin')
+  }, [category, icon, iconOptions])
 
   useEffect(() => {
     const hasJawServices = services.some((s) => s.category === 'JAW')
@@ -171,12 +170,9 @@ export function ServicesPage() {
               </div>
               <Pill>{visibleServices.length}</Pill>
             </div>
-            <div className="service-list" style={{ display: 'grid', gap: 'var(--space-2)' }}>
+            <div style={{ display: 'grid', gap: 'var(--space-2)' }}>
               {visibleServices.map((s) => (
-                <div
-                  key={s.id}
-                  className={`row-service service-list-row ${s.category === 'GENERAL' ? 'service-list-row-general' : ''}`}
-                >
+                <div key={s.id} className="row-service" style={s.category === 'GENERAL' ? { gridTemplateColumns: '1fr auto' } : undefined}>
                   {s.category !== 'GENERAL' ? (
                     <div className="row-icon" style={styles.iconWrap} aria-hidden>
                       <Icon name={s.icon} size={24} />
@@ -195,9 +191,7 @@ export function ServicesPage() {
                   </div>
                   <div className="row-actions">
                     <Button
-                      className="service-delete-btn"
                       title={t('services.deleteService')}
-                      variant="danger"
                       onClick={() => {
                         if (!confirm(t('services.deleteConfirm', { name: serviceDisplayName(s) })))
                           return
@@ -265,17 +259,17 @@ export function ServicesPage() {
                 >
                   <span style={styles.iconPickerLeft}>
                     <span style={styles.iconPickerMini}>
-                      <Icon name={resolvedIcon} size={22} />
+                      <Icon name={icon} size={22} />
                     </span>
-                    <span>{iconLabel(resolvedIcon)}</span>
+                    <span>{iconLabel(icon)}</span>
                   </span>
-                  <span style={{ opacity: 0.7 }}>▾</span>
+                  <span style={{ opacity: 0.7 }}>в–ѕ</span>
                 </button>
 
                 {iconMenuOpen ? (
                   <div style={styles.iconPickerMenu} role="listbox">
                     {iconOptions.map((opt) => {
-                      const active = resolvedIcon === opt
+                      const active = icon === opt
                       return (
                         <button
                           key={opt}
@@ -312,11 +306,11 @@ export function ServicesPage() {
           <div style={{ display: 'flex', gap: 'var(--space-4)', alignItems: 'center' }}>
             {category !== 'GENERAL' ? (
               <div style={{ ...styles.iconWrap, width: 44, height: 44 }}>
-                <Icon name={resolvedIcon} size={26} />
+                <Icon name={icon} size={26} />
               </div>
             ) : null}
             <div style={{ minWidth: 0 }}>
-              <div style={{ fontWeight: 650 }}>{name.trim() || iconLabel(resolvedIcon)}</div>
+              <div style={{ fontWeight: 650 }}>{name.trim() || iconLabel(icon)}</div>
               <div className="muted" style={{ fontSize: 13 }}>
                 {formatMoney(Math.round((Number(price) || 0) * 100), currency)}
               </div>
@@ -336,7 +330,7 @@ export function ServicesPage() {
               if (!n || !Number.isFinite(p)) return
               upsertService({
                 category,
-                icon: category === 'GENERAL' ? GENERAL_DEFAULT_ICON : resolvedIcon,
+                icon: category === 'GENERAL' ? GENERAL_DEFAULT_ICON : icon,
                 name: n,
                 priceCents: Math.round(p * 100),
                 jawRegion: category === 'JAW' ? jawRegion : undefined,
@@ -468,11 +462,6 @@ const styles: Record<string, React.CSSProperties> = {
     background: 'color-mix(in oklab, var(--primary) 16%, var(--panel))',
   },
 }
-
-
-
-
-
 
 
 

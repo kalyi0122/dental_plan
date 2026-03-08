@@ -378,12 +378,8 @@ textarea:focus-visible {
     height: 60px !important;
     backdrop-filter: blur(10px);
   }
-  .topbar-actions-main {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    margin-left: auto;
-    flex: 0 0 auto;
+  .topbar-actions-desktop {
+    display: none !important;
   }
   .mobile-drawer-head {
     display: flex;
@@ -451,14 +447,6 @@ textarea:focus-visible {
   .app-shell .app-topbar {
     padding-left: 10px !important;
     padding-right: 10px !important;
-  }
-  .topbar-actions-main {
-    gap: 6px;
-  }
-  .header-logout-btn {
-    min-height: 36px !important;
-    padding: 6px 10px !important;
-    font-size: 12px !important;
   }
 }
 @media (max-width: 413px) {
@@ -611,19 +599,9 @@ textarea:focus-visible {
   display: flex;
   gap: var(--space-3);
 }
-.patients-mobile-add-trigger {
-  display: none !important;
-}
 @media (max-width: 767px) {
   .card-search-wrap {
     width: 100%;
-    flex-wrap: wrap;
-  }
-  .patients-mobile-add-trigger {
-    display: inline-flex !important;
-    width: 100%;
-    min-height: 44px;
-    justify-content: center;
   }
 }
 
@@ -1336,213 +1314,6 @@ button:focus-visible {
   }
 }
 
-/* --- Doctors admin list rows (compact, list-like) --- */
-.doctor-list-row {
-  display: grid;
-  grid-template-columns: 40px minmax(0, 1fr) auto;
-  gap: 10px;
-  align-items: center;
-  padding: 10px 12px;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  background: linear-gradient(
-    180deg,
-    color-mix(in oklab, var(--panel2) 84%, transparent),
-    color-mix(in oklab, var(--panel2) 72%, transparent)
-  );
-  cursor: pointer;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
-}
-.doctor-list-row:hover {
-  border-color: color-mix(in oklab, var(--primary) 36%, var(--border));
-  box-shadow: 0 10px 22px rgba(3, 8, 20, 0.14);
-  transform: translateY(-1px);
-}
-.doctor-row-main {
-  min-width: 0;
-}
-.doctor-row-main > .muted {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.doctor-row-actions {
-  display: inline-flex;
-  align-items: center;
-  justify-content: flex-end;
-  min-width: 34px;
-}
-.doctor-delete-btn {
-  width: 34px;
-  height: 34px;
-  border-radius: 10px;
-  border: 1px solid color-mix(in oklab, var(--danger) 42%, var(--border));
-  background: color-mix(in oklab, var(--danger) 14%, var(--panel2));
-  color: var(--text);
-  display: grid;
-  place-items: center;
-  cursor: pointer;
-  padding: 0;
-}
-.doctor-delete-btn:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-}
-
-/* --- Patients & services list rows (compact action buttons) --- */
-.patient-list .patient-list-row {
-  grid-template-columns: 40px minmax(0, 1fr) auto;
-  gap: 10px;
-  padding: 10px 12px;
-}
-.patient-list .patient-row-actions {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  width: auto;
-}
-.patient-list .patient-open-link {
-  display: inline-flex;
-}
-.patient-list .patient-open-btn {
-  min-height: 34px !important;
-  padding: 6px 12px !important;
-  border-radius: 10px !important;
-  white-space: nowrap;
-}
-.patient-list .patient-delete-btn {
-  width: 34px;
-  height: 34px;
-  min-height: 34px !important;
-  border-radius: 10px !important;
-  padding: 0 !important;
-  display: grid !important;
-  place-items: center;
-}
-
-.service-list .service-list-row {
-  grid-template-columns: 40px minmax(0, 1fr) auto;
-  gap: 10px;
-  padding: 10px 12px;
-}
-.service-list .service-list-row-general {
-  grid-template-columns: minmax(0, 1fr) auto;
-}
-.service-list .service-list-row .row-actions {
-  display: inline-flex;
-  width: auto;
-}
-.service-list .service-delete-btn {
-  width: 34px;
-  height: 34px;
-  min-height: 34px !important;
-  border-radius: 10px !important;
-  padding: 0 !important;
-  display: grid !important;
-  place-items: center;
-}
-
-@media (max-width: 639px) {
-  .doctor-list-row {
-    grid-template-columns: 34px minmax(0, 1fr) 34px;
-    padding: 9px 10px;
-    gap: 8px;
-  }
-  .doctor-row-main > div:first-child {
-    gap: 6px !important;
-  }
-  .doctor-delete-btn {
-    width: 32px;
-    height: 32px;
-    border-radius: 9px;
-  }
-
-  .patient-list .patient-list-row {
-    grid-template-columns: 34px minmax(0, 1fr) auto;
-    grid-template-rows: auto;
-    padding: 9px 10px;
-    gap: 8px;
-  }
-  .patient-list .patient-row-actions {
-    width: auto;
-    flex-wrap: nowrap;
-  }
-  .patient-list .patient-open-btn {
-    min-height: 32px !important;
-    padding: 4px 10px !important;
-    font-size: 13px !important;
-  }
-  .patient-list .patient-delete-btn {
-    width: 32px;
-    height: 32px;
-    border-radius: 9px !important;
-  }
-
-  .service-list .service-list-row {
-    grid-template-columns: 34px minmax(0, 1fr) auto;
-    grid-template-rows: auto;
-    align-items: center;
-    padding: 9px 10px;
-    gap: 8px;
-  }
-  .service-list .service-list-row-general {
-    grid-template-columns: minmax(0, 1fr) auto;
-  }
-  .service-list .service-list-row .row-icon {
-    grid-column: auto;
-    grid-row: auto;
-    width: 34px;
-    height: 34px;
-    border-radius: 10px;
-  }
-  .service-list .service-list-row .row-main {
-    grid-column: auto;
-    grid-row: auto;
-  }
-  .service-list .service-list-row .row-actions {
-    grid-column: auto;
-    grid-row: auto;
-    margin-top: 0;
-    width: auto;
-  }
-  .service-list .service-delete-btn {
-    width: 32px;
-    height: 32px;
-    border-radius: 9px !important;
-  }
-}
-
-@media (max-width: 767px) {
-  .patients-add-card {
-    display: none !important;
-  }
-  .patients-create-overlay {
-    place-items: end center;
-    padding: 0;
-    background: rgba(3, 8, 20, 0.68);
-  }
-  .patients-create-modal {
-    width: min(680px, 100%);
-    border-radius: 22px 22px 0 0;
-    padding: 16px;
-    max-height: min(85dvh, 760px);
-    overflow-y: auto;
-    margin: 0;
-    border-bottom: none;
-  }
-  .patients-create-close {
-    width: 34px;
-    height: 34px;
-    border-radius: 12px;
-    border: 1px solid var(--border);
-    background: color-mix(in oklab, var(--panel2) 80%, transparent);
-    color: var(--text);
-    display: grid;
-    place-items: center;
-    cursor: pointer;
-  }
-}
-
 @media (max-width: 1023px) {
   .app-shell.nav-open .app-topbar {
     filter: saturate(0.85);
@@ -1554,7 +1325,7 @@ button:focus-visible {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 44vw;
+    max-width: 62vw;
   }
   .layout-two-col,
   .layout-planner {
@@ -1574,21 +1345,34 @@ button:focus-visible {
   .auth-grid {
     gap: var(--space-3);
   }
+  .row-patient .row-actions,
+  .row-service .row-actions {
+    width: 100%;
+  }
+  .row-patient .row-actions > *,
+  .row-service .row-actions > * {
+    flex: 1 1 calc(50% - var(--space-2));
+    min-width: 120px;
+  }
+  .row-patient .row-actions a {
+    display: inline-flex;
+  }
+  .row-patient .row-actions button,
+  .row-service .row-actions button,
+  .row-patient .row-actions a > button {
+    width: 100%;
+    min-height: 44px;
+  }
 }
 
 @media (max-width: 413px) {
   .topbar-title {
-    max-width: 36vw;
+    max-width: 58vw;
     font-size: 14px;
   }
-  .patient-list .patient-open-btn {
-    min-height: 30px !important;
-    padding: 3px 9px !important;
-    font-size: 12px !important;
-  }
-  .patient-list .patient-delete-btn,
-  .service-list .service-delete-btn {
-    width: 30px;
-    height: 30px;
+  .row-patient .row-actions > *,
+  .row-service .row-actions > * {
+    flex: 1 1 100%;
+    min-width: 0;
   }
 }

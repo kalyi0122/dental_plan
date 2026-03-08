@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Plus, Search, Trash2, X } from 'lucide-react'
+import { Plus, Search, Trash2 } from 'lucide-react'
 import type { DoctorPatient } from '../auth/types'
 import { useAuth } from '../auth/useAuth'
 import {
@@ -28,7 +28,6 @@ export function PatientsPage() {
   const [email, setEmail] = useState('')
   const [syncError, setSyncError] = useState<string | null>(null)
   const [isBusy, setIsBusy] = useState(false)
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
 
   const loadPatients = useCallback(
     async (doctorId: string) => {
@@ -90,7 +89,7 @@ export function PatientsPage() {
     })
   }, [patients, q])
 
-  const onCreatePatient = async (options?: { closeAfter?: boolean }) => {
+  const onCreatePatient = async () => {
     const name = fullName.trim()
     if (!name || !userDoctor?.id) return
 
@@ -114,43 +113,8 @@ export function PatientsPage() {
     setFullName('')
     setPhone('')
     setEmail('')
-    if (options?.closeAfter) setIsCreateModalOpen(false)
     await loadPatients(userDoctor.id)
   }
-
-  const renderCreatePatientForm = (closeAfterCreate = false) => (
-    <div style={{ display: 'grid', gap: 'var(--space-4)' }}>
-      <div>
-        <div style={styles.label}>{t('patients.fullName')}</div>
-        <Input value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder={t('patients.placeholderName')} />
-      </div>
-      <div>
-        <div style={styles.label}>{t('patients.phone')}</div>
-        <Input
-          value={phone}
-          onChange={(e) => setPhone(formatPhoneInput(e.target.value))}
-          placeholder={t('patients.placeholderPhone')}
-        />
-      </div>
-      <div>
-        <div style={styles.label}>{t('patients.email')}</div>
-        <Input value={email} onChange={(e) => setEmail(e.target.value)} placeholder={t('patients.placeholderEmail')} />
-      </div>
-      <Button
-        variant="primary"
-        disabled={!userDoctor?.id || isBusy}
-        onClick={() => void onCreatePatient({ closeAfter: closeAfterCreate })}
-        style={{ display: 'inline-flex', gap: 8, alignItems: 'center', justifyContent: 'center' }}
-      >
-        <Plus size={16} />
-        {t('patients.createPatient')}
-      </Button>
-      <div className="muted" style={{ fontSize: 12 }}>
-        {t('patients.supabaseNote')}
-      </div>
-      {syncError ? <div style={styles.errorBox}>{syncError}</div> : null}
-    </div>
-  )
 
   const onDeletePatient = async (patientId: string, patientName: string) => {
     if (!userDoctor?.id) return
@@ -181,21 +145,12 @@ export function PatientsPage() {
                 style={{ paddingLeft: 36 }}
               />
             </div>
-            <Button
-              className="patients-mobile-add-trigger"
-              variant="primary"
-              onClick={() => setIsCreateModalOpen(true)}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}
-            >
-              <Plus size={16} />
-              {t('patients.addPatient')}
-            </Button>
           </div>
         }
       >
-        <div className="patient-list" style={{ display: 'grid', gap: 'var(--space-2)' }}>
+        <div style={{ display: 'grid', gap: 'var(--space-3)' }}>
           {filtered.map((p) => (
-            <div key={p.id} className="row-patient patient-list-row">
+            <div key={p.id} className="row-patient">
               <Avatar name={p.fullName} color={p.avatarColor} />
               <div style={{ minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
@@ -208,15 +163,12 @@ export function PatientsPage() {
                   {p.phone ? formatPhoneForDisplay(p.phone) : '-'}
                 </div>
               </div>
-              <div className="row-actions patient-row-actions">
-                <Link className="patient-open-link" to={`/patients/${p.id}`}>
-                  <Button className="patient-open-btn" variant="primary">
-                    {t('patients.open')}
-                  </Button>
+              <div className="row-actions" style={{ display: 'flex', gap: 'var(--space-2)' }}>
+                <Link to={`/patients/${p.id}`}>
+                  <Button variant="primary">{t('patients.open')}</Button>
                 </Link>
                 <Button
-                  className="patient-delete-btn"
-                  variant="danger"
+                  variant="ghost"
                   title={t('patients.deletePatient')}
                   disabled={isBusy}
                   onClick={() => void onDeletePatient(p.id, p.fullName)}
@@ -235,28 +187,39 @@ export function PatientsPage() {
         </div>
       </Card>
 
-      <Card className="patients-add-card" title={t('patients.addPatient')} subtitle={t('patients.addPatientSubtitle')}>
-        {renderCreatePatientForm()}
-      </Card>
-
-      {isCreateModalOpen ? (
-        <div className="tooth-modal-overlay patients-create-overlay" onClick={() => setIsCreateModalOpen(false)}>
-          <div className="tooth-modal patients-create-modal" onClick={(event) => event.stopPropagation()}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-              <div style={{ fontWeight: 700, fontSize: 18 }}>{t('patients.addPatient')}</div>
-              <button
-                type="button"
-                className="patients-create-close"
-                onClick={() => setIsCreateModalOpen(false)}
-                aria-label={t('common.cancel')}
-              >
-                <X size={16} />
-              </button>
-            </div>
-            {renderCreatePatientForm(true)}
+      <Card title={t('patients.addPatient')} subtitle={t('patients.addPatientSubtitle')}>
+        <div style={{ display: 'grid', gap: 'var(--space-4)' }}>
+          <div>
+            <div style={styles.label}>{t('patients.fullName')}</div>
+            <Input value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder={t('patients.placeholderName')} />
           </div>
+          <div>
+            <div style={styles.label}>{t('patients.phone')}</div>
+            <Input
+              value={phone}
+              onChange={(e) => setPhone(formatPhoneInput(e.target.value))}
+              placeholder={t('patients.placeholderPhone')}
+            />
+          </div>
+          <div>
+            <div style={styles.label}>{t('patients.email')}</div>
+            <Input value={email} onChange={(e) => setEmail(e.target.value)} placeholder={t('patients.placeholderEmail')} />
+          </div>
+          <Button
+            variant="primary"
+            disabled={!userDoctor?.id || isBusy}
+            onClick={() => void onCreatePatient()}
+            style={{ display: 'inline-flex', gap: 8, alignItems: 'center', justifyContent: 'center' }}
+          >
+            <Plus size={16} />
+            {t('patients.createPatient')}
+          </Button>
+          <div className="muted" style={{ fontSize: 12 }}>
+            {t('patients.supabaseNote')}
+          </div>
+          {syncError ? <div style={styles.errorBox}>{syncError}</div> : null}
         </div>
-      ) : null}
+      </Card>
     </div>
   )
 }

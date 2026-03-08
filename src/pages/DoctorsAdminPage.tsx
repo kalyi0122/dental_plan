@@ -158,7 +158,7 @@ export function DoctorsAdminPage() {
             </Button>
           }
         >
-          <div className="doctor-list" style={{ display: 'grid', gap: 'var(--space-2)' }}>
+          <div style={{ display: 'grid', gap: 'var(--space-3)' }}>
             {sortedDoctors.map((doctor) => {
               const active = doctor.id === selectedDoctorId
               return (
@@ -166,7 +166,7 @@ export function DoctorsAdminPage() {
                   key={doctor.id}
                   role="button"
                   tabIndex={0}
-                  className="doctor-list-row"
+                  className="row-patient"
                   onClick={() => void selectDoctor(doctor.id)}
                   onKeyDown={(event) => {
                     if (event.key === 'Enter' || event.key === ' ') {
@@ -184,7 +184,7 @@ export function DoctorsAdminPage() {
                   }}
                 >
                   <Avatar name={doctor.full_name} />
-                  <div className="doctor-row-main" style={{ minWidth: 0 }}>
+                  <div style={{ minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
                       <div style={{ fontWeight: 650 }}>{doctor.full_name}</div>
                       {doctor.is_admin ? <Pill>{t('admin.pillAdmin')}</Pill> : null}
@@ -194,12 +194,10 @@ export function DoctorsAdminPage() {
                       {doctor.email}
                     </div>
                   </div>
-                  <div className="doctor-row-actions">
-                    <button
-                      type="button"
-                      className="doctor-delete-btn"
+                  <div className="row-actions" style={{ display: 'flex', gap: 'var(--space-2)' }}>
+                    <Button
+                      variant="danger"
                       title={t('admin.deleteDoctorTitle')}
-                      aria-label={t('admin.deleteDoctorTitle')}
                       disabled={busy || doctor.id === userDoctor?.id}
                       onClick={(event) => {
                         event.preventDefault()
@@ -208,7 +206,7 @@ export function DoctorsAdminPage() {
                       }}
                     >
                       <Trash2 size={16} />
-                    </button>
+                    </Button>
                   </div>
                 </div>
               )
