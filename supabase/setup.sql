@@ -222,7 +222,9 @@ with check (
   doctor_id = public.current_doctor_id()
   or public.is_current_doctor_admin()
 );
+                         
 
+                         
 drop policy if exists "Doctor or admin can delete patients" on public.patients;
 create policy "Doctor or admin can delete patients"
 on public.patients
