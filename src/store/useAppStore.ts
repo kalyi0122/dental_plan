@@ -23,6 +23,7 @@ type AppState = {
   plans: TreatmentPlan[]
   settings: Settings
 
+  setPatients: (patients: Patient[]) => void
   upsertPatient: (p: Omit<Patient, 'id'> & Partial<Pick<Patient, 'id'>>) => Id
   removePatient: (patientId: Id) => void
 
@@ -155,16 +156,16 @@ function seedPatients(): Patient[] {
   return [
     {
       id: nanoid(),
-      fullName: DEMO_PATIENTS[0].en.fullName,
-      phone: DEMO_PATIENTS[0].en.phone,
-      email: DEMO_PATIENTS[0].en.email,
+      fullName: DEMO_PATIENTS[0].ru.fullName,
+      phone: DEMO_PATIENTS[0].ru.phone,
+      email: DEMO_PATIENTS[0].ru.email,
       avatarColor: '#6ea8fe',
     },
     {
       id: nanoid(),
-      fullName: DEMO_PATIENTS[1].en.fullName,
-      phone: DEMO_PATIENTS[1].en.phone,
-      email: DEMO_PATIENTS[1].en.email,
+      fullName: DEMO_PATIENTS[1].ru.fullName,
+      phone: DEMO_PATIENTS[1].ru.phone,
+      email: DEMO_PATIENTS[1].ru.email,
       avatarColor: '#24c08a',
     },
   ]
@@ -196,8 +197,8 @@ function seedSettings(): Settings {
     numberingSystem: 'FDI',
     currency: 'EUR',
     theme: 'system',
-    locale: 'en',
-    quoteText: quoteTextByLocale.en,
+    locale: 'ru',
+    quoteText: quoteTextByLocale.ru,
   }
 }
 
@@ -232,8 +233,18 @@ export const useAppStore = create<AppState>()(
       _hydrated: false,
       ...seedAll(),
 
+      setPatients: (patients) => {
+        set(
+          produce((draft: AppState) => {
+            draft.patients = patients
+            const validPatientIds = new Set(patients.map((p) => p.id))
+            draft.plans = draft.plans.filter((plan) => validPatientIds.has(plan.patientId))
+          }),
+        )
+      },
+
       upsertPatient: (p) => {
-        const id = p.id ?? nanoid()
+        const id = p.id ?? crypto.randomUUID()
         set(
           produce((draft: AppState) => {
             const idx = draft.patients.findIndex((x) => x.id === id)

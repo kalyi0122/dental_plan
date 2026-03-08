@@ -6,6 +6,9 @@ import { Avatar, Button, Card, Input, Pill } from '../components/ui'
 export function DoctorsAdminPage() {
   const { doctors, userDoctor, addDoctor, deleteDoctor, refreshDoctors } = useAuth()
   const [fullName, setFullName] = useState('')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [isAdmin, setIsAdmin] = useState(false)
   const [feedback, setFeedback] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
 
@@ -21,13 +24,21 @@ export function DoctorsAdminPage() {
   const onCreateDoctor = async () => {
     setFeedback(null)
     setBusy(true)
-    const result = await addDoctor(fullName)
+    const result = await addDoctor({
+      fullName: fullName.trim(),
+      email: email.trim(),
+      password: password.trim(),
+      isAdmin,
+    })
     setBusy(false)
     if (!result.ok) {
       setFeedback(result.message)
       return
     }
     setFullName('')
+    setEmail('')
+    setPassword('')
+    setIsAdmin(false)
   }
 
   const onDeleteDoctor = async (doctorId: string, fullNameValue: string) => {
@@ -88,10 +99,39 @@ export function DoctorsAdminPage() {
             />
           </div>
 
+          <div>
+            <div style={styles.label}>Email</div>
+            <Input
+              type="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              placeholder="e.g. doctor@clinic.com"
+            />
+          </div>
+
+          <div>
+            <div style={styles.label}>Password</div>
+            <Input
+              type="password"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              placeholder="At least 6 characters"
+            />
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <input
+              type="checkbox"
+              checked={isAdmin}
+              onChange={(event) => setIsAdmin(event.target.checked)}
+            />
+            <label style={{ fontSize: 13 }}>Admin access</label>
+          </div>
+
           <Button
             variant="primary"
             onClick={onCreateDoctor}
-            disabled={busy || !fullName.trim()}
+            disabled={busy || !fullName.trim() || !email.trim() || !password.trim()}
             style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
           >
             <Plus size={16} />
