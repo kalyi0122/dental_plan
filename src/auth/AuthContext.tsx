@@ -3,7 +3,7 @@ import type { Session, User } from '@supabase/supabase-js'
 import { AuthContext } from './context'
 import type { AuthActionResult, AuthContextValue, CreateDoctorInput, Doctor, DoctorPatient } from './types'
 import { fetchDoctorPatients } from '../data/doctorPatients'
-import { createIsolatedSupabaseClient, supabase } from '../lib/supabaseClient'
+import { createIsolatedSupabaseClient, supabase, supabaseAnonKey, supabaseUrl } from '../lib/supabaseClient'
 import { useAppStore } from '../store/useAppStore'
 import { t as translate } from '../i18n/translations'
 
@@ -27,7 +27,7 @@ function normalizeAuthMessage(message: string) {
   const normalized = message.toLowerCase()
   if (normalized.includes('invalid login credentials')) return tr('auth.error.wrongCredentials')
   if (normalized.includes('email not confirmed')) {
-    return tr('auth.error.disableEmailConfirmation')
+    return tr('auth.error.confirmEmailToLogin')
   }
   return message
 }
@@ -36,9 +36,17 @@ function isInvalidCredentialsMessage(message: string) {
   return message.toLowerCase().includes('invalid login credentials')
 }
 
+function isUserAlreadyRegisteredMessage(message: string) {
+  const normalized = message.toLowerCase()
+  return normalized.includes('already registered') || normalized.includes('already been registered')
+}
+
 function isValidEmail(email: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
 }
+
+const ADMIN_EMAIL = 'admin@clinic.local'
+const ADMIN_PASSWORD = 'admin123'
 
 async function loadDoctorById(doctorId: string) {
   const { data, error } = await supabase
@@ -121,31 +129,45 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       })
       if (insertError) return { ok: false, message: insertError.message }
 
-      const isolated = createIsolatedSupabaseClient()
-      const signUpResult = await isolated.auth.signUp({
-        email,
-        password,
-        options: {
+      const { data: sessionData } = await supabase.auth.getSession()
+      const accessToken = sessionData.session?.access_token
+      if (!accessToken) {
+        await supabase.from('doctors').delete().eq('id', doctorId)
+        return { ok: false, message: tr('auth.error.loginFailed') }
+      }
+
+      const createResponse = await fetch(`${supabaseUrl}/functions/v1/admin-create-user`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          apikey: supabaseAnonKey ?? '',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email,
+          password,
           data: {
             doctor_id: doctorId,
             doctor_name: fullName,
           },
-        },
+        }),
       })
 
-      if (signUpResult.error) {
+      if (!createResponse.ok) {
+        const text = await createResponse.text()
         await supabase.from('doctors').delete().eq('id', doctorId)
-        return { ok: false, message: normalizeAuthMessage(signUpResult.error.message) }
+        return { ok: false, message: normalizeAuthMessage(text) }
       }
 
-      if (!signUpResult.data.session) {
+      const isolated = createIsolatedSupabaseClient()
+      const verify = await isolated.auth.signInWithPassword({
+        email,
+        password,
+      })
+      if (verify.error) {
         await supabase.from('doctors').delete().eq('id', doctorId)
-        return {
-          ok: false,
-          message: tr('auth.error.disableEmailConfirmationInstant'),
-        }
+        return { ok: false, message: tr('auth.error.userNotCreated') }
       }
-
       await isolated.auth.signOut()
       await refreshDoctors()
       return { ok: true }
@@ -175,14 +197,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const deleteDoctor = useCallback(
     async (doctorId: string): Promise<AuthActionResult> => {
+      const doctor = doctors.find((item) => item.id === doctorId)
       const { error } = await supabase.from('doctors').delete().eq('id', doctorId)
       if (error) return { ok: false, message: error.message }
+
+      if (doctor?.email) {
+        const { data: sessionData } = await supabase.auth.getSession()
+        const accessToken = sessionData.session?.access_token
+        if (accessToken) {
+          await fetch(`${supabaseUrl}/functions/v1/admin-delete-user`, {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+              apikey: supabaseAnonKey ?? '',
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ email: doctor.email }),
+          })
+        }
+      }
 
       await refreshDoctors()
       if (userDoctor?.id === doctorId) await signOut()
       return { ok: true }
     },
-    [refreshDoctors, signOut, userDoctor?.id],
+    [doctors, refreshDoctors, signOut, userDoctor?.id],
   )
 
   const getDoctorPatients = useCallback(async (doctorId: string): Promise<DoctorPatient[]> => {
@@ -197,6 +236,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (!isValidEmail(email)) return { ok: false, message: tr('auth.error.enterValidEmail') }
       const normalizedPassword = password.trim()
       if (normalizedPassword.length < 6) return { ok: false, message: tr('auth.error.passwordTooShort') }
+      if (email === ADMIN_EMAIL && normalizedPassword !== ADMIN_PASSWORD) {
+        return { ok: false, message: tr('auth.error.adminPasswordHint') }
+      }
 
       let signInResult = await supabase.auth.signInWithPassword({
         email,
@@ -204,41 +246,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       })
       if (signInResult.error) {
         const signInMessage = signInResult.error.message ?? tr('auth.error.loginFailed')
-        if (!isInvalidCredentialsMessage(signInMessage)) {
+        if (email === ADMIN_EMAIL) {
           return { ok: false, message: normalizeAuthMessage(signInMessage) }
         }
-
-        const doctor = await loadDoctorByEmail(email)
-        if (!doctor) return { ok: false, message: tr('auth.error.wrongCredentials') }
-
-        const isolated = createIsolatedSupabaseClient()
-        const signUpResult = await isolated.auth.signUp({
-          email,
-          password: normalizedPassword,
-          options: {
-            data: {
-              doctor_id: doctor.id,
-              doctor_name: doctor.full_name,
-            },
-          },
-        })
-        if (signUpResult.error) {
-          return { ok: false, message: normalizeAuthMessage(signUpResult.error.message) }
-        }
-        if (!signUpResult.data.session) {
-          return {
-            ok: false,
-            message: tr('auth.error.disableEmailConfirmation'),
-          }
-        }
-        await isolated.auth.signOut()
-        signInResult = await supabase.auth.signInWithPassword({
-          email,
-          password: normalizedPassword,
-        })
-        if (signInResult.error) {
-          return { ok: false, message: normalizeAuthMessage(signInResult.error.message) }
-        }
+        return { ok: false, message: normalizeAuthMessage(signInMessage) }
       }
 
       const activeUser = signInResult.data.user

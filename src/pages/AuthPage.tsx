@@ -9,6 +9,7 @@ export function AuthPage() {
   const { authError, signInWithEmail } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [resultMessage, setResultMessage] = useState<string | null>(null)
 
@@ -43,12 +44,20 @@ export function AuthPage() {
             <div>
               <div style={styles.label}>{t('auth.password')}</div>
               <Input
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
                 minLength={6}
                 placeholder={t('auth.passwordPlaceholder')}
               />
+              <label style={styles.checkRow}>
+                <input
+                  type="checkbox"
+                  checked={showPassword}
+                  onChange={(event) => setShowPassword(event.target.checked)}
+                />
+                <span>{t('auth.showPassword')}</span>
+              </label>
             </div>
 
             <Button variant="primary" type="submit" disabled={isSubmitting}>
@@ -99,5 +108,12 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: 'center',
     gap: 8,
     fontSize: 14,
+  },
+  checkRow: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 8,
+    fontSize: 13,
+    marginTop: 8,
   },
 }
