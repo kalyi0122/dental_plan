@@ -23,6 +23,7 @@ export function DoctorsAdminPage() {
   const [createEmail, setCreateEmail] = useState('')
   const [createPassword, setCreatePassword] = useState('')
   const [createIsAdmin, setCreateIsAdmin] = useState(false)
+  const [showCreatePassword, setShowCreatePassword] = useState(false)
 
   const sortedDoctors = useMemo(
     () => [...doctors].sort((a, b) => a.full_name.localeCompare(b.full_name)),
@@ -96,6 +97,7 @@ export function DoctorsAdminPage() {
     setCreateEmail('')
     setCreatePassword('')
     setCreateIsAdmin(false)
+    setShowCreatePassword(false)
   }
 
   const onCreateDoctor = async () => {
@@ -108,11 +110,11 @@ export function DoctorsAdminPage() {
       isAdmin: createIsAdmin,
     })
     setBusy(false)
+    resetCreateForm()
     if (!result.ok) {
       setFeedback(result.message)
       return
     }
-    resetCreateForm()
     setIsCreateModalOpen(false)
   }
 
@@ -328,7 +330,12 @@ export function DoctorsAdminPage() {
             <div style={{ display: 'grid', gap: 'var(--space-3)' }}>
               <div>
                 <div style={styles.label}>{t('admin.fullName')}</div>
-                <Input value={createName} onChange={(event) => setCreateName(event.target.value)} />
+                <Input
+                  value={createName}
+                  onChange={(event) => setCreateName(event.target.value)}
+                  autoComplete="off"
+                  name="create-doctor-name"
+                />
               </div>
               <div>
                 <div style={styles.label}>{t('admin.email')}</div>
@@ -337,17 +344,29 @@ export function DoctorsAdminPage() {
                   value={createEmail}
                   onChange={(event) => setCreateEmail(event.target.value)}
                   placeholder={t('auth.emailPlaceholder')}
+                  autoComplete="off"
+                  name="create-doctor-email"
                 />
               </div>
               <div>
                 <div style={styles.label}>{t('auth.password')}</div>
                 <Input
-                  type="password"
+                  type={showCreatePassword ? 'text' : 'password'}
                   minLength={6}
                   value={createPassword}
                   onChange={(event) => setCreatePassword(event.target.value)}
                   placeholder={t('admin.passwordPlaceholder')}
+                  autoComplete="new-password"
+                  name="create-doctor-password"
                 />
+                <label style={styles.checkRow}>
+                  <input
+                    type="checkbox"
+                    checked={showCreatePassword}
+                    onChange={(event) => setShowCreatePassword(event.target.checked)}
+                  />
+                  <span>{t('auth.showPassword')}</span>
+                </label>
               </div>
               <label style={styles.checkRow}>
                 <input
