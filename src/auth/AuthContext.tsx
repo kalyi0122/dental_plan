@@ -32,15 +32,6 @@ function normalizeAuthMessage(message: string) {
   return message
 }
 
-function isInvalidCredentialsMessage(message: string) {
-  return message.toLowerCase().includes('invalid login credentials')
-}
-
-function isUserAlreadyRegisteredMessage(message: string) {
-  const normalized = message.toLowerCase()
-  return normalized.includes('already registered') || normalized.includes('already been registered')
-}
-
 function isValidEmail(email: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
 }

@@ -174,7 +174,7 @@ export async function generateQuotePdf({
   const stageSections = groupProceduresByStage(plan)
   let grandTotal = 0
 
-  stageSections.forEach((section, sectionIndex) => {
+  stageSections.forEach((section) => {
     if (y > pageH - 190) {
       doc.addPage()
       y = 52
