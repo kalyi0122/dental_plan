@@ -19,11 +19,13 @@ export function AuthPage() {
     setIsSubmitting(true)
     const result = await signInWithEmail(email, password)
     setIsSubmitting(false)
+    setEmail('')
+    setPassword('')
+    setShowPassword(false)
     if (!result.ok) {
       setResultMessage(result.message)
       return
     }
-    setPassword('')
   }
 
   return (
