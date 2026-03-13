@@ -198,7 +198,7 @@ export async function generateQuotePdf({
     })
 
     const stageTotal = sectionRows.reduce((sum, r) => sum + r.lineCents, 0)
-    const stageTitle = section.title ? `${sectionIndex + 1} ${copy.stage}` : copy.unstaged
+    const stageTitle = section.title ? section.title : copy.unstaged
     doc.setFont('NotoSans', 'bold')
     doc.setFontSize(16)
     doc.text(stageTitle, margin, y)

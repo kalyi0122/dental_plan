@@ -91,6 +91,13 @@ export function DoctorsAdminPage() {
     }
   }, [loadDoctorPatients, selectedDoctorId])
 
+  const resetCreateForm = () => {
+    setCreateName('')
+    setCreateEmail('')
+    setCreatePassword('')
+    setCreateIsAdmin(false)
+  }
+
   const onCreateDoctor = async () => {
     setFeedback(null)
     setBusy(true)
@@ -105,10 +112,7 @@ export function DoctorsAdminPage() {
       setFeedback(result.message)
       return
     }
-    setCreateName('')
-    setCreateEmail('')
-    setCreatePassword('')
-    setCreateIsAdmin(false)
+    resetCreateForm()
     setIsCreateModalOpen(false)
   }
 
@@ -150,7 +154,10 @@ export function DoctorsAdminPage() {
           right={
             <Button
               variant="primary"
-              onClick={() => setIsCreateModalOpen(true)}
+              onClick={() => {
+                resetCreateForm()
+                setIsCreateModalOpen(true)
+              }}
               style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}
             >
               <Plus size={16} />
@@ -293,7 +300,13 @@ export function DoctorsAdminPage() {
       </div>
 
       {isCreateModalOpen ? (
-        <div className="tooth-modal-overlay" onClick={() => setIsCreateModalOpen(false)}>
+        <div
+          className="tooth-modal-overlay"
+          onClick={() => {
+            resetCreateForm()
+            setIsCreateModalOpen(false)
+          }}
+        >
           <div
             className="tooth-modal"
             style={{ width: 'min(560px, 100%)', borderRadius: 20, padding: 20 }}
@@ -301,7 +314,14 @@ export function DoctorsAdminPage() {
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
               <div style={{ fontWeight: 700, fontSize: 18 }}>{t('admin.createDoctorAccount')}</div>
-              <button type="button" style={styles.iconClose} onClick={() => setIsCreateModalOpen(false)}>
+              <button
+                type="button"
+                style={styles.iconClose}
+                onClick={() => {
+                  resetCreateForm()
+                  setIsCreateModalOpen(false)
+                }}
+              >
                 <X size={16} />
               </button>
             </div>
