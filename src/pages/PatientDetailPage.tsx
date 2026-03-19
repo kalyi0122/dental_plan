@@ -1,17 +1,20 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { FileDown } from 'lucide-react'
 import { useShallow } from 'zustand/react/shallow'
+import { useAuth } from '../auth/useAuth'
 import { useAppStore } from '../store/useAppStore'
 import { useTranslation } from '../i18n/useTranslation'
 import { formatMoney } from '../domain/money'
 import { Avatar, Button, Card, Pill } from '../components/ui'
 import { TreatmentPlanner } from '../components/TreatmentPlanner'
 import { generateQuotePdf } from '../pdf/generateQuotePdf'
+import { upsertTreatmentPlan } from '../data/treatmentPlans'
 
 export function PatientDetailPage() {
   const { patientId } = useParams()
   const { t } = useTranslation()
+  const { userDoctor } = useAuth()
   const { hydrated, patients, allPlans, createPlanForPatient, settings, services } = useAppStore(
     useShallow((s) => ({
       hydrated: s._hydrated,
@@ -34,6 +37,21 @@ export function PatientDetailPage() {
 
   const [selectedPlanId, setSelectedPlanId] = useState<string>(() => plans[0]?.id ?? '')
   const selectedPlan = useMemo(() => plans.find((p) => p.id === selectedPlanId) ?? plans[0], [plans, selectedPlanId])
+  const planSnapshot = useMemo(
+    () => (selectedPlan ? JSON.stringify(selectedPlan) : ''),
+    [selectedPlan],
+  )
+  const lastSyncedRef = useRef('')
+
+  useEffect(() => {
+    if (!selectedPlan || !userDoctor?.id) return
+    if (planSnapshot === lastSyncedRef.current) return
+    const timeout = window.setTimeout(async () => {
+      const { error } = await upsertTreatmentPlan(userDoctor.id, selectedPlan)
+      if (!error) lastSyncedRef.current = planSnapshot
+    }, 600)
+    return () => window.clearTimeout(timeout)
+  }, [planSnapshot, selectedPlan, userDoctor?.id])
 
   // Update selectedPlanId when plans change
   useEffect(() => {
@@ -125,6 +143,10 @@ export function PatientDetailPage() {
             onClick={() => {
               const id = createPlanForPatient(patient.id)
               setSelectedPlanId(id)
+              if (userDoctor?.id) {
+                const plan = useAppStore.getState().plans.find((p) => p.id === id)
+                if (plan) void upsertTreatmentPlan(userDoctor.id, plan)
+              }
             }}
           >
             {t('patient.createFirstPlan')}

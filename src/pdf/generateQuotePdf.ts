@@ -112,6 +112,8 @@ const PDF_COPY: Record<Settings['locale'], PdfCopy> = {
 
 let fontDataPromise: Promise<{ regularB64: string; boldB64: string }> | null = null
 
+type QuotePdfResult = { doc: jsPDF; fileName: string }
+
 export async function generateQuotePdf({
   patient,
   plan,
@@ -123,7 +125,38 @@ export async function generateQuotePdf({
   services: Service[]
   settings: Settings
 }) {
-  const copy = settings.locale === 'kg' ? PDF_COPY.kg : PDF_COPY.ru
+  const { doc, fileName } = await buildQuotePdfDocument({ patient, plan, services, settings })
+  doc.save(fileName)
+}
+
+export async function generateQuotePdfBlob({
+  patient,
+  plan,
+  services,
+  settings,
+}: {
+  patient: Patient
+  plan: TreatmentPlan
+  services: Service[]
+  settings: Settings
+}) {
+  const { doc, fileName } = await buildQuotePdfDocument({ patient, plan, services, settings })
+  const blob = doc.output('blob') as Blob
+  return { blob, fileName }
+}
+
+async function buildQuotePdfDocument({
+  patient,
+  plan,
+  services,
+  settings,
+}: {
+  patient: Patient
+  plan: TreatmentPlan
+  services: Service[]
+  settings: Settings
+}): Promise<QuotePdfResult> {
+  const copy = settings.locale === 'kg' ? PDF_COPY.kg : settings.locale === 'en' ? PDF_COPY.en : PDF_COPY.ru
   const doc = new jsPDF({ unit: 'pt', format: 'a4' })
   await ensurePdfFonts(doc)
   const pageW = doc.internal.pageSize.getWidth()
@@ -251,8 +284,9 @@ export async function generateQuotePdf({
   doc.text(allText, margin, y)
 
   const safeName = patient.fullName.replace(/[^\w\s-]/g, '').replace(/\s+/g, '_')
-  doc.save(`${copy.filePrefix}_${safeName}.pdf`)
-}
+  const fileName = `${copy.filePrefix}_${safeName}.pdf`
+  return { doc, fileName }
+  }
 
 async function ensurePdfFonts(doc: jsPDF) {
   if (!fontDataPromise) {

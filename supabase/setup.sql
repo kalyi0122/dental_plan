@@ -18,6 +18,22 @@ create table if not exists public.patients (
   created_at timestamptz not null default now()
 );
 
+create table if not exists public.treatment_plans (
+  id text primary key,
+  doctor_id uuid not null references public.doctors(id) on delete cascade,
+  patient_id uuid not null references public.patients(id) on delete cascade,
+  title text not null default 'Treatment plan',
+  stages jsonb not null default '[]'::jsonb,
+  procedures jsonb not null default '[]'::jsonb,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+alter table public.treatment_plans alter column id type text using id::text;
+
+create index if not exists treatment_plans_doctor_id_idx on public.treatment_plans (doctor_id);
+create index if not exists treatment_plans_patient_id_idx on public.treatment_plans (patient_id);
+
 alter table public.doctors add column if not exists email text;
 
 update public.doctors
@@ -61,6 +77,7 @@ $$;
 
 alter table public.doctors enable row level security;
 alter table public.patients enable row level security;
+alter table public.treatment_plans enable row level security;
 
 do $$
 begin
@@ -82,6 +99,16 @@ begin
       and tablename = 'patients'
   ) then
     alter publication supabase_realtime add table public.patients;
+  end if;
+
+  if not exists (
+    select 1
+    from pg_publication_tables
+    where pubname = 'supabase_realtime'
+      and schemaname = 'public'
+      and tablename = 'treatment_plans'
+  ) then
+    alter publication supabase_realtime add table public.treatment_plans;
   end if;
 end $$;
 
@@ -162,3 +189,79 @@ using (
   or doctor_id in (select d.id from public.doctors d where lower(d.email) = lower(auth.jwt() ->> 'email'))
   or public.is_current_doctor_admin()
 );
+
+drop policy if exists "Doctor or admin can read treatment plans" on public.treatment_plans;
+create policy "Doctor or admin can read treatment plans"
+on public.treatment_plans
+for select
+to authenticated
+using (
+  doctor_id = public.current_doctor_id()
+  or doctor_id in (select d.id from public.doctors d where lower(d.email) = lower(auth.jwt() ->> 'email'))
+  or public.is_current_doctor_admin()
+);
+
+drop policy if exists "Doctor or admin can insert treatment plans" on public.treatment_plans;
+create policy "Doctor or admin can insert treatment plans"
+on public.treatment_plans
+for insert
+to authenticated
+with check (
+  doctor_id = public.current_doctor_id()
+  or doctor_id in (select d.id from public.doctors d where lower(d.email) = lower(auth.jwt() ->> 'email'))
+  or public.is_current_doctor_admin()
+);
+
+drop policy if exists "Doctor or admin can update treatment plans" on public.treatment_plans;
+create policy "Doctor or admin can update treatment plans"
+on public.treatment_plans
+for update
+to authenticated
+using (
+  doctor_id = public.current_doctor_id()
+  or doctor_id in (select d.id from public.doctors d where lower(d.email) = lower(auth.jwt() ->> 'email'))
+  or public.is_current_doctor_admin()
+)
+with check (
+  doctor_id = public.current_doctor_id()
+  or doctor_id in (select d.id from public.doctors d where lower(d.email) = lower(auth.jwt() ->> 'email'))
+  or public.is_current_doctor_admin()
+);
+
+drop policy if exists "Doctor or admin can delete treatment plans" on public.treatment_plans;
+create policy "Doctor or admin can delete treatment plans"
+on public.treatment_plans
+for delete
+to authenticated
+using (
+  doctor_id = public.current_doctor_id()
+  or doctor_id in (select d.id from public.doctors d where lower(d.email) = lower(auth.jwt() ->> 'email'))
+  or public.is_current_doctor_admin()
+);
+
+-- Storage bucket for patient PDFs
+insert into storage.buckets (id, name, public)
+values ('patient-pdfs', 'patient-pdfs', false)
+on conflict (id) do nothing;
+
+drop policy if exists "Authenticated can read patient pdfs" on storage.objects;
+create policy "Authenticated can read patient pdfs"
+on storage.objects
+for select
+to authenticated
+using (bucket_id = 'patient-pdfs');
+
+drop policy if exists "Authenticated can upload patient pdfs" on storage.objects;
+create policy "Authenticated can upload patient pdfs"
+on storage.objects
+for insert
+to authenticated
+with check (bucket_id = 'patient-pdfs');
+
+drop policy if exists "Authenticated can update patient pdfs" on storage.objects;
+create policy "Authenticated can update patient pdfs"
+on storage.objects
+for update
+to authenticated
+using (bucket_id = 'patient-pdfs')
+with check (bucket_id = 'patient-pdfs');

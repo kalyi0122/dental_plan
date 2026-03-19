@@ -23,6 +23,7 @@ type AppState = {
   plans: TreatmentPlan[]
   settings: Settings
 
+  setPlans: (plans: TreatmentPlan[]) => void
   setPatients: (patients: Patient[]) => void
   upsertPatient: (p: Omit<Patient, 'id'> & Partial<Pick<Patient, 'id'>>) => Id
   removePatient: (patientId: Id) => void
@@ -232,6 +233,14 @@ export const useAppStore = create<AppState>()(
     (set, get) => ({
       _hydrated: false,
       ...seedAll(),
+
+      setPlans: (plans) => {
+        set(
+          produce((draft: AppState) => {
+            draft.plans = plans
+          }),
+        )
+      },
 
       setPatients: (patients) => {
         set(

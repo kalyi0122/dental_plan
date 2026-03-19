@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 import { AppShell } from './components/AppShell'
 import { useAuth } from './auth/useAuth'
 import { DoctorsAdminPage } from './pages/DoctorsAdminPage'
+import { AdminPatientDetailPage } from './pages/AdminPatientDetailPage'
 import { PatientsPage } from './pages/PatientsPage'
 import { PatientDetailPage } from './pages/PatientDetailPage'
 import { ServicesPage } from './pages/ServicesPage'
@@ -50,6 +51,14 @@ export default function App() {
           element={
             <RequireAdmin>
               <DoctorsAdminPage />
+            </RequireAdmin>
+          }
+        />
+        <Route
+          path="/admin/patients/:patientId"
+          element={
+            <RequireAdmin>
+              <AdminPatientDetailPage />
             </RequireAdmin>
           }
         />

@@ -3,6 +3,7 @@ import type { Session, User } from '@supabase/supabase-js'
 import { AuthContext } from './context'
 import type { AuthActionResult, AuthContextValue, CreateDoctorInput, Doctor, DoctorPatient } from './types'
 import { fetchDoctorPatients } from '../data/doctorPatients'
+import { fetchDoctorPlans, mapRowToTreatmentPlan, upsertTreatmentPlan } from '../data/treatmentPlans'
 import { createIsolatedSupabaseClient, supabase, supabaseAnonKey, supabaseUrl } from '../lib/supabaseClient'
 import { useAppStore } from '../store/useAppStore'
 import { t as translate } from '../i18n/translations'
@@ -306,6 +307,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       subscription.unsubscribe()
     }
   }, [refreshDoctors, resolveDoctor])
+
+  useEffect(() => {
+    if (!userDoctor?.id) return
+    let active = true
+    const loadPlans = async () => {
+      const { data, error } = await fetchDoctorPlans(userDoctor.id)
+      if (!active) return
+      if (error) {
+        setAuthError(error.message)
+        return
+      }
+      const rows = (data as any[] | null) ?? []
+      const remotePlans = rows.map((row) => mapRowToTreatmentPlan(row))
+      const currentPlans = useAppStore.getState().plans
+      const remoteIds = new Set(remotePlans.map((p) => p.id))
+      const localMissing = currentPlans.filter((plan) => !remoteIds.has(plan.id))
+      if (localMissing.length > 0) {
+        // Seed Supabase with local-only plans so admins can see them.
+        await Promise.all(localMissing.map((plan) => upsertTreatmentPlan(userDoctor.id, plan)))
+      }
+      const merged = new Map(currentPlans.map((p) => [p.id, p]))
+      remotePlans.forEach((p) => merged.set(p.id, p))
+      useAppStore.getState().setPlans(Array.from(merged.values()))
+    }
+    void loadPlans()
+    return () => {
+      active = false
+    }
+  }, [userDoctor?.id])
 
   useEffect(() => {
     const channel = supabase

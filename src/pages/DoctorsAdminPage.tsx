@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Pencil, Plus, Save, Trash2, UserRoundSearch, X } from 'lucide-react'
 import type { DoctorPatient } from '../auth/types'
 import { useAuth } from '../auth/useAuth'
@@ -8,6 +9,7 @@ import { Avatar, Button, Card, Input, Pill } from '../components/ui'
 
 export function DoctorsAdminPage() {
   const { t } = useTranslation()
+  const navigate = useNavigate()
   const { doctors, userDoctor, addDoctor, updateDoctor, deleteDoctor, getDoctorPatients } = useAuth()
   const [selectedDoctorId, setSelectedDoctorId] = useState('')
   const [doctorPatients, setDoctorPatients] = useState<DoctorPatient[]>([])
@@ -285,8 +287,23 @@ export function DoctorsAdminPage() {
             ) : (
               <div style={{ display: 'grid', gap: 'var(--space-2)' }}>
                 {doctorPatients.map((patient) => (
-                  <div key={patient.id} style={styles.patientRow}>
-                    <Avatar name={patient.full_name} size={32} />
+                  <div
+                    key={patient.id}
+                    role="button"
+                    tabIndex={0}
+                    style={{
+                      ...styles.patientRow,
+                      cursor: 'pointer',
+                    }}
+                    onClick={() => navigate(`/admin/patients/${patient.id}`)}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault()
+                        navigate(`/admin/patients/${patient.id}`)
+                      }
+                    }}
+                  >
+                    <Avatar name={patient.full_name} size={32} color={patient.avatar_color ?? undefined} />
                     <div style={{ minWidth: 0 }}>
                       <div style={{ fontWeight: 600 }}>{patient.full_name}</div>
                       <div className="muted" style={{ fontSize: 12 }}>
