@@ -157,7 +157,7 @@ create policy "Doctor or admin can insert patients"
 on public.patients
 for insert
 to authenticated
-with check (
+with check ( 
   doctor_id = public.current_doctor_id()
   or doctor_id in (select d.id from public.doctors d where lower(d.email) = lower(auth.jwt() ->> 'email'))
   or public.is_current_doctor_admin()
