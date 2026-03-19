@@ -220,7 +220,7 @@ export function AdminPatientDetailPage() {
                       setPdfError(null)
                       setPdfBusyId(plan.id)
                       try {
-                        const { blob, fileName } = await generateQuotePdfBlob({
+                        const { blob } = await generateQuotePdfBlob({
                           patient: {
                             id: patient.id,
                             fullName: patient.full_name,
